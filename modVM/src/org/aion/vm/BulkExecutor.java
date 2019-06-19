@@ -352,20 +352,21 @@ public final class BulkExecutor {
     }
 
     private static boolean isAllowedByAVM(RepositoryCache repository, AionAddress destination) {
-        InternalVmType vm;
-        if (ContractFactory.isPrecompiledContract(destination)) {
-            // skip the call to disk
-            vm = InternalVmType.FVM;
-        } else {
-            InternalVmType storedVmType = repository.getVMUsed(destination);
+        // will load contract into memory otherwise leading to consensus issues
+        RepositoryCache<AccountState, IBlockStoreBase> track = repository.startTracking();
+        AccountState accountState = track.getAccountState(destination);
 
-            // DEFAULT is returned when there was no contract information stored
-            if (storedVmType == InternalVmType.UNKNOWN) {
-                // will load contract into memory otherwise leading to consensus issues
-                RepositoryCache track = repository.startTracking();
+        InternalVmType vm;
+        if (accountState == null) {
+            // the address doesn't exist yet, so it can be used by either vm
+            vm = InternalVmType.EITHER;
+        } else {
+            vm = repository.getVMUsed(destination, accountState.getCodeHash());
+
+            // UNKNOWN is returned when there was no contract information stored
+            if (vm == InternalVmType.UNKNOWN) {
+                // use the in-memory value
                 vm = track.getVmType(destination);
-            } else {
-                vm = storedVmType;
             }
         }
         return vm != InternalVmType.FVM;
