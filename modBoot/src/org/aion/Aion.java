@@ -43,6 +43,7 @@ import org.aion.mcf.config.CfgApiRpc;
 import org.aion.mcf.config.CfgApiZmq;
 import org.aion.mcf.config.CfgSsl;
 import org.aion.mcf.mine.IMineRunner;
+import org.aion.mcf.stake.IStakeRunner;
 import org.aion.solidity.Compiler;
 import org.aion.utils.NativeLibrary;
 import org.aion.vm.LongLivedAvm;
@@ -205,6 +206,7 @@ public class Aion {
         IAionChain ac = AionFactory.create();
 
         IMineRunner nm = null;
+        IStakeRunner sr = null;
 
         if (!cfg.getConsensus().isSeed()) {
             nm = ac.getBlockMiner();

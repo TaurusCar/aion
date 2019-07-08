@@ -2,11 +2,11 @@ package org.aion.zero.types;
 
 import java.math.BigInteger;
 import java.util.List;
-import org.aion.types.AionAddress;
 import org.aion.interfaces.block.Block;
+import org.aion.types.AionAddress;
 
-/** aion block interface. */
-public interface IAionBlock extends Block<AionTransaction, A0BlockHeader> {
+/** pos block interface. */
+public interface PoSBlockInterface extends Block<AionTransaction, StakedBlockHeader> {
 
     AionAddress getCoinbase();
 
@@ -14,7 +14,7 @@ public interface IAionBlock extends Block<AionTransaction, A0BlockHeader> {
 
     byte[] getDifficulty();
 
-    //byte[] getStateRoot();
+    byte[] getStateRoot();
 
     void setStateRoot(byte[] stateRoot);
 
@@ -26,7 +26,7 @@ public interface IAionBlock extends Block<AionTransaction, A0BlockHeader> {
 
     byte[] getLogBloom();
 
-    void setNonce(byte[] nonce);
+    void setSeed(byte[] seed);
 
     List<AionTransaction> getTransactionsList();
 

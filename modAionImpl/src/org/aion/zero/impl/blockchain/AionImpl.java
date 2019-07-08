@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import org.aion.crypto.ECKey;
+import org.aion.mcf.blockchain.PosChain;
 import org.aion.types.AionAddress;
 import org.aion.crypto.ECKeyFac;
 import org.aion.equihash.EquihashMiner;
@@ -12,7 +13,6 @@ import org.aion.interfaces.db.RepositoryCache;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.mcf.blockchain.IPendingStateInternal;
-import org.aion.mcf.blockchain.IPowChain;
 import org.aion.mcf.core.AccountState;
 import org.aion.mcf.core.ImportResult;
 import org.aion.mcf.mine.IMineRunner;
@@ -25,10 +25,12 @@ import org.aion.zero.impl.AionHub;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.tx.TxCollector;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxReceipt;
 import org.aion.zero.types.IAionBlock;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 
 public class AionImpl implements IAionChain {
@@ -64,7 +66,12 @@ public class AionImpl implements IAionChain {
     }
 
     @Override
-    public IPowChain<AionBlock, A0BlockHeader> getBlockchain() {
+    public PosChain<AionBlock, A0BlockHeader> getBlockchain() {
+        return aionHub.getBlockchain();
+    }
+
+    @Override
+    public PosChain<AionPoSBlock, StakedBlockHeader> getPosChain() {
         return aionHub.getBlockchain();
     }
 

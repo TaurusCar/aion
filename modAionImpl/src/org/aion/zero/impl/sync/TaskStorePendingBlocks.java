@@ -1,9 +1,9 @@
 package org.aion.zero.impl.sync;
 
 import java.util.List;
+import org.aion.interfaces.block.Block;
 import org.aion.zero.impl.AionBlockchainImpl;
 import org.aion.zero.impl.sync.statistics.BlockType;
-import org.aion.zero.impl.types.AionBlock;
 import org.slf4j.Logger;
 
 /**
@@ -14,14 +14,14 @@ import org.slf4j.Logger;
 final class TaskStorePendingBlocks implements Runnable {
 
     private final AionBlockchainImpl chain;
-    private final List<AionBlock> batch;
+    private final List<Block> batch;
     private final String displayId;
     private final SyncStats syncStats;
     private final Logger log;
 
     TaskStorePendingBlocks(
             final AionBlockchainImpl _chain,
-            final List<AionBlock> _batch,
+            final List<Block> _batch,
             final String _displayId,
             final SyncStats _syncStats,
             final Logger _log) {
@@ -35,7 +35,7 @@ final class TaskStorePendingBlocks implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY - 1);
-        AionBlock first = batch.get(0);
+        Block first = batch.get(0);
         Thread.currentThread().setName("sync-save:" + first.getNumber());
 
         int stored = chain.storePendingBlockRange(batch);

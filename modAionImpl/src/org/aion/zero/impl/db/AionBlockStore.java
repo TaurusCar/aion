@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.aion.interfaces.block.Block;
 import org.aion.interfaces.db.ByteArrayKeyValueDatabase;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
@@ -260,7 +261,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
      *     first > last} the blocks are returned in descending order of their height, otherwise when
      *     {@code first < last} the blocks are returned in ascending order of their height.
      */
-    public List<AionBlock> getBlocksByRange(long first, long last) {
+    public List<Block> getBlocksByRange(long first, long last) {
         if (first <= 0L) {
             return null;
         }
@@ -277,7 +278,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             if (first == last) {
                 return List.of(block);
             } else if (first > last) { // first is highest -> can query directly by parent hash
-                List<AionBlock> blocks = new ArrayList<>();
+                List<Block> blocks = new ArrayList<>();
                 blocks.add(block);
 
                 for (long i = first - 1; i >= (last > 0 ? last : 1); i--) {
@@ -296,7 +297,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 }
                 return blocks;
             } else { // last is highest
-                LinkedList<AionBlock> blocks = new LinkedList<>();
+                LinkedList<Block> blocks = new LinkedList<>();
                 AionBlock lastBlock = getChainBlockByNumber(last);
 
                 if (lastBlock == null) { // assuming height was above best block

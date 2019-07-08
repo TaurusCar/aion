@@ -18,6 +18,7 @@ import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.log.LogUtil;
 import org.aion.mcf.blockchain.IPendingStateInternal;
+import org.aion.mcf.blockchain.PosChain;
 import org.aion.mcf.config.CfgNetP2p;
 import org.aion.mcf.db.IBlockStorePow;
 import org.aion.p2p.Handler;
@@ -27,6 +28,7 @@ import org.aion.util.bytes.ByteUtil;
 import org.aion.zero.impl.blockchain.AionPendingStateImpl;
 import org.aion.zero.impl.blockchain.ChainConfiguration;
 import org.aion.zero.impl.config.CfgAion;
+import org.aion.zero.impl.core.AionChainInterface;
 import org.aion.zero.impl.core.IAionBlockchain;
 import org.aion.zero.impl.db.AionRepositoryImpl;
 import org.aion.zero.impl.db.RecoveryUtils;
@@ -62,7 +64,7 @@ public class AionHub {
 
     private IPendingStateInternal<AionBlock, AionTransaction> mempool;
 
-    private IAionBlockchain blockchain;
+    private AionChainInterface blockchain;
 
     // TODO: Refactor to interface later
     private AionRepositoryImpl repository;
@@ -270,7 +272,7 @@ public class AionHub {
         return repository;
     }
 
-    public IAionBlockchain getBlockchain() {
+    public PosChain getBlockchain() {
         return blockchain;
     }
 

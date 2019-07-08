@@ -22,6 +22,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.aion.interfaces.block.Block;
 import org.aion.interfaces.db.ByteArrayKeyValueDatabase;
 import org.aion.interfaces.db.Flushable;
 import org.aion.vm.api.types.ByteArrayWrapper;
@@ -38,6 +39,7 @@ import org.aion.rlp.RLPList;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.slf4j.Logger;
 
 /**
@@ -81,7 +83,7 @@ public class PendingBlockStore implements Flushable, Closeable {
 
     private ByteArrayKeyValueDatabase levelDatabase;
     /** Used to map a queue identifier to a list of consecutive blocks. */
-    private ObjectDataSource<List<AionBlock>> queueSource;
+    private ObjectDataSource<List<AionPoSBlock>> queueSource;
 
     private ByteArrayKeyValueDatabase queueDatabase;
     /** Used to maps a block hash to its current queue identifier. */
@@ -143,7 +145,7 @@ public class PendingBlockStore implements Flushable, Closeable {
         if (queueDatabase == null || queueDatabase.isClosed()) {
             throw newException(QUEUE_DB_NAME, props);
         }
-        this.queueSource = new ObjectDataSource<>(queueDatabase, BLOCK_LIST_RLP_SERIALIZER);
+        this.queueSource = new ObjectDataSource<>(queueDatabase, POS_BLOCK_LIST_RLP_SERIALIZER);
 
         // create the index source
         props.setProperty(Props.DB_NAME, INDEX_DB_NAME);
@@ -231,6 +233,32 @@ public class PendingBlockStore implements Flushable, Closeable {
                 }
             };
 
+    private static final Serializer<List<AionPoSBlock>, byte[]> POS_BLOCK_LIST_RLP_SERIALIZER =
+        new Serializer<>() {
+            @Override
+            public byte[] serialize(List<AionPoSBlock> object) {
+                byte[][] infoList = new byte[object.size()][];
+                int i = 0;
+                for (AionPoSBlock b : object) {
+                    infoList[i] = b.getEncoded();
+                    i++;
+                }
+                return RLP.encodeList(infoList);
+            }
+
+            @Override
+            public List<AionPoSBlock> deserialize(byte[] stream) {
+                RLPList list = (RLPList) RLP.decode2(stream).get(0);
+                List<AionPoSBlock> res = new ArrayList<>(list.size());
+
+                for (RLPElement aList : list) {
+                    res.add(new AionPoSBlock(aList.getRLPData()));
+                }
+                return res;
+            }
+        };
+
+
     /**
      * Stores a single block in the pending block store for importing later when the chain reaches
      * the needed height and the parent block gets imported. Is used by the functionality receiving
@@ -242,7 +270,7 @@ public class PendingBlockStore implements Flushable, Closeable {
      * @implNote The status blocks received impact the functionality of the base value generation
      *     {@link #nextBase(long, long)} for requesting blocks ahead of import time.
      */
-    public boolean addStatusBlock(AionBlock block) {
+    public boolean addStatusBlock(AionPoSBlock block) {
 
         // nothing to do with null parameter
         if (block == null) {
@@ -259,7 +287,7 @@ public class PendingBlockStore implements Flushable, Closeable {
                 // find parent queue hash
                 Optional<byte[]> existingQueueHash = indexSource.get(block.getParentHash());
                 byte[] currentQueueHash = null;
-                List<AionBlock> currentQueue = null;
+                List<AionPoSBlock> currentQueue = null;
 
                 // get existing queue if present
                 if (existingQueueHash.isPresent()) {
@@ -376,8 +404,8 @@ public class PendingBlockStore implements Flushable, Closeable {
      * @implNote The functionality is optimized for calls providing consecutive blocks, but ensures
      *     correct behavior even when the blocks are not consecutive.
      */
-    public int addBlockRange(List<AionBlock> blocks) {
-        List<AionBlock> blockRange = new ArrayList<>(blocks);
+    public int addBlockRange(List<AionPoSBlock> blocks) {
+        List<AionPoSBlock> blockRange = new ArrayList<>(blocks);
 
         // nothing to do when 0 blocks given
         if (blockRange.isEmpty()) {
@@ -388,7 +416,7 @@ public class PendingBlockStore implements Flushable, Closeable {
 
         try {
             // first block determines the batch queue placement
-            AionBlock first = blockRange.remove(0);
+            AionPoSBlock first = blockRange.remove(0);
 
             int stored = addBlockRange(first, blockRange);
 
@@ -418,7 +446,7 @@ public class PendingBlockStore implements Flushable, Closeable {
      *     number of blocks that were stored from the given input.
      * @implNote Any method calling this functionality must first acquire the needed write lock.
      */
-    private int addBlockRange(AionBlock first, List<AionBlock> blockRange) {
+    private int addBlockRange(AionPoSBlock first, List<AionPoSBlock> blockRange) {
 
         // skip if already stored
         while (indexSource.get(first.getHash()).isPresent()) {
@@ -432,7 +460,7 @@ public class PendingBlockStore implements Flushable, Closeable {
         // the first block is not stored
         // start new queue with hash = first node hash
         byte[] currentQueueHash = first.getHash();
-        List<AionBlock> currentQueue = new ArrayList<>();
+        List<AionPoSBlock> currentQueue = new ArrayList<>();
 
         // add (to) level
         byte[] levelKey = ByteUtil.longToBytes(first.getNumber());
@@ -453,9 +481,9 @@ public class PendingBlockStore implements Flushable, Closeable {
         currentQueue.add(first);
 
         // keep track of parent to ensure correct range
-        AionBlock parent = first;
+        AionPoSBlock parent = first;
 
-        AionBlock current;
+        AionPoSBlock current;
         // process rest of block range
         while (!blockRange.isEmpty()) {
             current = blockRange.remove(0);
@@ -548,7 +576,7 @@ public class PendingBlockStore implements Flushable, Closeable {
      * @return a map of queue identifiers and lists of blocks containing all the separate chain
      *     queues stored at that level.
      */
-    public Map<ByteArrayWrapper, List<AionBlock>> loadBlockRange(long level) {
+    public Map<ByteArrayWrapper, List<AionPoSBlock>> loadBlockRange(long level) {
         databaseLock.readLock().lock();
 
         try {
@@ -560,8 +588,8 @@ public class PendingBlockStore implements Flushable, Closeable {
             }
 
             // get all the blocks in the given queues
-            List<AionBlock> list;
-            Map<ByteArrayWrapper, List<AionBlock>> blocks = new HashMap<>();
+            List<AionPoSBlock> list;
+            Map<ByteArrayWrapper, List<AionPoSBlock>> blocks = new HashMap<>();
             for (byte[] queue : queueHashes) {
                 list = queueSource.get(queue);
                 if (list != null) {
@@ -589,7 +617,7 @@ public class PendingBlockStore implements Flushable, Closeable {
     public void dropPendingQueues(
             long level,
             Collection<ByteArrayWrapper> queues,
-            Map<ByteArrayWrapper, List<AionBlock>> blocks) {
+            Map<ByteArrayWrapper, List<AionPoSBlock>> blocks) {
 
         databaseLock.writeLock().lock();
 
@@ -597,10 +625,10 @@ public class PendingBlockStore implements Flushable, Closeable {
             // delete imported queues & blocks
             for (ByteArrayWrapper q : queues) {
                 // load the queue from disk
-                List<AionBlock> currentQ = queueSource.get(q.getData());
+                List<AionPoSBlock> currentQ = queueSource.get(q.getData());
 
                 // delete imported blocks
-                for (AionBlock b : blocks.get(q)) {
+                for (AionPoSBlock b : blocks.get(q)) {
                     // delete index
                     indexSource.deleteInBatch(b.getHash());
                     currentQ.remove(b);
@@ -612,7 +640,7 @@ public class PendingBlockStore implements Flushable, Closeable {
                 // the queue has been updated since the import read
                 if (!currentQ.isEmpty()) {
                     // get first block in remaining queue
-                    AionBlock first = currentQ.get(0);
+                    Block first = currentQ.get(0);
 
                     // update queue hash to first remaining element
                     byte[] currentQueueHash = first.getHash();
@@ -621,7 +649,7 @@ public class PendingBlockStore implements Flushable, Closeable {
                     queueSource.putToBatch(currentQueueHash, currentQ);
 
                     // update block index
-                    for (AionBlock b : currentQ) {
+                    for (Block b : currentQ) {
                         indexSource.putToBatch(b.getHash(), currentQueueHash);
                     }
 

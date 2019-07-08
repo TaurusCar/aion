@@ -335,7 +335,15 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
             return (Builder) super.withEnergyConsumed(_energyConsumed);
         }
 
+        public Builder withEnergyConsumed(long _energyConsumed) throws HeaderStructureException {
+            return (Builder) super.withEnergyConsumed(_energyConsumed);
+        }
+
         public Builder withEnergyLimit(byte[] _energyLimit) throws HeaderStructureException {
+            return (Builder) super.withEnergyConsumed(_energyLimit);
+        }
+
+        public Builder withEnergyLimit(long _energyLimit) throws HeaderStructureException {
             return (Builder) super.withEnergyConsumed(_energyLimit);
         }
 

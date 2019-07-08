@@ -26,12 +26,15 @@ import org.aion.mcf.config.CfgSync;
 import org.aion.mcf.config.CfgTx;
 import org.aion.mcf.types.exceptions.HeaderStructureException;
 import org.aion.zero.impl.AionGenesis;
+import org.aion.zero.impl.AionGenesisPoS;
 import org.aion.zero.impl.GenesisBlockLoader;
 
 /** @author chris */
 public final class CfgAion extends Cfg {
 
     protected AionGenesis genesis;
+
+    protected AionGenesisPoS genesisPoS;
 
     protected static final int N = 210;
 
@@ -72,11 +75,13 @@ public final class CfgAion extends Cfg {
     public void setGenesis() {
         try {
             this.genesis = GenesisBlockLoader.loadJSON(getInitialGenesisFile().getAbsolutePath());
+            genesisPoS = GenesisBlockLoader.loadJSONtoPosGenesis(getInitialGenesisFile().getAbsolutePath());
         } catch (IOException | HeaderStructureException e) {
             System.out.println(String.format("Genesis load exception %s", e.getMessage()));
             System.out.println("defaulting to default AionGenesis configuration");
             try {
                 this.genesis = (new AionGenesis.Builder()).build();
+                genesisPoS = (new AionGenesisPoS.Builder()).build();
             } catch (HeaderStructureException e2) {
                 // if this fails, it means our DEFAULT genesis violates header rules
                 // this is catastrophic
@@ -88,6 +93,10 @@ public final class CfgAion extends Cfg {
     public void setGenesis(AionGenesis genesis) {
         this.genesis = genesis;
     }
+    public void setGenesisPoS(AionGenesisPoS genesis) {
+        genesisPoS = genesis;
+    }
+
 
     public CfgConsensusPow getConsensus() {
         return (CfgConsensusPow) this.consensus;
@@ -96,6 +105,11 @@ public final class CfgAion extends Cfg {
     public synchronized AionGenesis getGenesis() {
         if (this.genesis == null) setGenesis();
         return this.genesis;
+    }
+
+    public synchronized AionGenesisPoS getGenesisPoS() {
+        if (genesisPoS == null) setGenesis();
+        return genesisPoS;
     }
 
     public static int getN() {

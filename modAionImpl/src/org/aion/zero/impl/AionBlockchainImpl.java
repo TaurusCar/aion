@@ -33,6 +33,7 @@ import org.aion.equihash.EquihashMiner;
 import org.aion.evtmgr.IEvent;
 import org.aion.evtmgr.IEventMgr;
 import org.aion.evtmgr.impl.evt.EventBlock;
+import org.aion.interfaces.block.Block;
 import org.aion.interfaces.db.InternalVmType;
 import org.aion.interfaces.db.Repository;
 import org.aion.interfaces.db.RepositoryCache;
@@ -48,6 +49,7 @@ import org.aion.mcf.manager.ChainStatistics;
 import org.aion.mcf.trie.Trie;
 import org.aion.mcf.trie.TrieImpl;
 import org.aion.mcf.trie.TrieNodeResult;
+import org.aion.mcf.types.AbstractBlockSummary;
 import org.aion.mcf.types.BlockIdentifierImpl;
 import org.aion.mcf.types.exceptions.HeaderStructureException;
 import org.aion.mcf.valid.BlockHeaderValidator;
@@ -69,7 +71,7 @@ import org.aion.vm.api.interfaces.IBloomFilter;
 import org.aion.vm.exception.VMException;
 import org.aion.zero.impl.blockchain.ChainConfiguration;
 import org.aion.zero.impl.config.CfgAion;
-import org.aion.zero.impl.core.IAionBlockchain;
+import org.aion.zero.impl.core.AionChainInterface;
 import org.aion.zero.impl.core.energy.AbstractEnergyStrategyLimit;
 import org.aion.zero.impl.core.energy.EnergyStrategies;
 import org.aion.zero.impl.db.AionBlockStore;
@@ -78,6 +80,7 @@ import org.aion.zero.impl.sync.DatabaseType;
 import org.aion.zero.impl.sync.SyncMgr;
 import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionBlockSummary;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.impl.types.AionTxInfo;
 import org.aion.zero.impl.types.RetValidPreBlock;
 import org.aion.zero.impl.valid.TXValidator;
@@ -106,7 +109,7 @@ import org.slf4j.LoggerFactory;
  * to generate new blocks to mine. As for receiving blocks, this class interacts with {@link
  * SyncMgr} to manage the importing of blocks from network.
  */
-public class AionBlockchainImpl implements IAionBlockchain {
+public class AionBlockchainImpl implements AionChainInterface {
 
     private static final Logger LOG = LoggerFactory.getLogger(LogEnum.CONS.name());
     private static final Logger TX_LOG = LoggerFactory.getLogger(LogEnum.TX.name());
@@ -124,13 +127,14 @@ public class AionBlockchainImpl implements IAionBlockchain {
      * configuration provider" to provide us different configurations.
      */
     ChainConfiguration chainConfiguration;
+
     private A0BCConfig config;
     private long exitOn = Long.MAX_VALUE;
     private AionRepositoryImpl repository;
     private RepositoryCache<AccountState, IBlockStoreBase<?, ?>> track;
     private TransactionStore<AionTransaction, AionTxReceipt, org.aion.zero.impl.types.AionTxInfo>
             transactionStore;
-    private AionBlock bestBlock;
+    private Block bestBlock;
     /**
      * This version of the bestBlock is only used for external reference (ex. through {@link
      * #getBestBlock()}), this is done because {@link #bestBlock} can slip into temporarily
@@ -140,12 +144,14 @@ public class AionBlockchainImpl implements IAionBlockchain {
      * <p>However we would still like to publish a bestBlock without locking, therefore we introduce
      * a volatile block that is only published when all forking/appending behaviour is completed.
      */
-    private volatile AionBlock pubBestBlock;
+    private volatile Block pubBestBlock;
+
     private volatile BigInteger totalDifficulty = ZERO;
     private ChainStatistics chainStats;
     private AtomicReference<BlockIdentifierImpl> bestKnownBlock = new AtomicReference<>();
     private boolean fork = false;
     private AionAddress minerCoinbase;
+    private AionAddress stakerCoinbase;
     private byte[] minerExtraData;
     private Stack<State> stateStack = new Stack<>();
     private IEventMgr evtMgr = null;
@@ -181,6 +187,11 @@ public class AionBlockchainImpl implements IAionBlockchain {
             LOG.warn("No miner Coinbase!");
         }
 
+        stakerCoinbase = this.config.getStakerCoinbase();
+        if (stakerCoinbase == null) {
+            LOG.warn("No staker Coinbase!");
+        }
+
         /** Save a copy of the miner extra data */
         byte[] extraBytes = this.config.getExtraData();
         this.minerExtraData =
@@ -214,15 +225,25 @@ public class AionBlockchainImpl implements IAionBlockchain {
         }
 
         BigInteger initialSupply = ZERO;
-        for (AccountState as : cfgAion.getGenesis().getPremine().values()) {
-            initialSupply = initialSupply.add(as.getBalance());
+
+        // TODO [Unity]: remove pos intialSupply later.
+        if (cfgAion.getConsensus().getStaking()) {
+            for (AccountState as : cfgAion.getGenesisPoS().getPremine().values()) {
+                initialSupply = initialSupply.add(as.getBalance());
+            }
+        } else {
+            for (AccountState as : cfgAion.getGenesis().getPremine().values()) {
+                initialSupply = initialSupply.add(as.getBalance());
+            }
         }
 
         ChainConfiguration config = new ChainConfiguration(blkNum, initialSupply);
         return new A0BCConfig() {
             @Override
             public AionAddress getCoinbase() {
-                return cfgAion.getGenesis().getCoinbase();
+                return cfgAion.getConsensus().getStaking()
+                        ? cfgAion.getGenesisPoS().getCoinbase()
+                        : cfgAion.getGenesis().getCoinbase();
             }
 
             @Override
@@ -239,6 +260,11 @@ public class AionBlockchainImpl implements IAionBlockchain {
             @Override
             public AionAddress getMinerCoinbase() {
                 return AddressUtils.wrapAddress(cfgAion.getConsensus().getMinerAddress());
+            }
+
+            @Override
+            public AionAddress getStakerCoinbase() {
+                return AddressUtils.wrapAddress(cfgAion.getConsensus().getStakerAddress());
             }
 
             // TODO: hook up to configuration file
@@ -333,46 +359,43 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     /**
-     * Returns a {@link PostExecutionWork} object whose {@code doWork()} method will
-     * run the provided logic defined in this method. This work is to be applied after each
-     * transaction has been run.
+     * Returns a {@link PostExecutionWork} object whose {@code doWork()} method will run the
+     * provided logic defined in this method. This work is to be applied after each transaction has
+     * been run.
      *
      * <p>This "work" is specific to the {@link AionBlockchainImpl#generatePreBlock(IAionBlock)}
      * method.
      */
-    private static PostExecutionWork getPostExecutionWorkForGeneratePreBlock(Repository repository) {
-        PostExecutionLogic logic = (topRepository,
-                childRepository,
-                transactionSummary,
-                transaction) -> {
-            if (!transactionSummary.isRejected()) {
-                childRepository.flush();
+    private static PostExecutionWork getPostExecutionWorkForGeneratePreBlock(
+            Repository repository) {
+        PostExecutionLogic logic =
+                (topRepository, childRepository, transactionSummary, transaction) -> {
+                    if (!transactionSummary.isRejected()) {
+                        childRepository.flush();
 
-                AionTxReceipt receipt = transactionSummary.getReceipt();
-                receipt.setPostTxState(topRepository.getRoot());
-                receipt.setTransaction(transaction);
-            }
-        };
+                        AionTxReceipt receipt = transactionSummary.getReceipt();
+                        receipt.setPostTxState(topRepository.getRoot());
+                        receipt.setTransaction(transaction);
+                    }
+                };
 
         return new PostExecutionWork(repository, logic);
     }
 
     /**
-     * Returns a {@link PostExecutionWork} object whose {@code doWork()} method will
-     * run the provided logic defined in this method. This work is to be applied after each
-     * transaction has been run.
+     * Returns a {@link PostExecutionWork} object whose {@code doWork()} method will run the
+     * provided logic defined in this method. This work is to be applied after each transaction has
+     * been run.
      *
      * <p>This "work" is specific to the {@link AionBlockchainImpl#applyBlock(IAionBlock)} method.
      */
     private static PostExecutionWork getPostExecutionWorkForApplyBlock(Repository repository) {
-        PostExecutionLogic logic = (topRepository,
-                childRepository,
-                transactionSummary,
-                transaction) -> {
-            childRepository.flush();
-            AionTxReceipt receipt = transactionSummary.getReceipt();
-            receipt.setPostTxState(topRepository.getRoot());
-        };
+        PostExecutionLogic logic =
+                (topRepository, childRepository, transactionSummary, transaction) -> {
+                    childRepository.flush();
+                    AionTxReceipt receipt = transactionSummary.getReceipt();
+                    receipt.setPostTxState(topRepository.getRoot());
+                };
 
         return new PostExecutionWork(repository, logic);
     }
@@ -397,6 +420,26 @@ public class AionBlockchainImpl implements IAionBlockchain {
 
     public AionBlockStore getBlockStore() {
         return repository.getBlockStore();
+    }
+
+    @Override
+    public AbstractBlockSummary add(Block block) {
+        return null;
+    }
+
+    @Override
+    public AbstractBlockSummary add(Block block, boolean rebuild) {
+        return null;
+    }
+
+    @Override
+    public ImportResult tryToConnect(Block block) {
+        return null;
+    }
+
+    @Override
+    public void storeBlock(Block block, List<AionTxReceipt> receipts) {
+
     }
 
     /**
@@ -433,12 +476,29 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     @Override
+    public Block createNewBlock(Block parent, List<AionTransaction> transactions,
+        boolean waitUntilBlockTime) {
+        return null;
+    }
+
+    @Override
+    public BlockContext createNewBlockContext(Block parent, List<AionTransaction> transactions,
+        boolean waitUntilBlockTime) {
+        return null;
+    }
+
+    @Override
+    public Block getTopBlock() {
+        return null;
+    }
+
+    @Override
     public AionBlock getBlockByNumber(long blockNr) {
         return getBlockStore().getChainBlockByNumber(blockNr);
     }
 
     @Override
-    public List<AionBlock> getBlocksByRange(long first, long last) {
+    public List<Block> getBlocksByRange(long first, long last) {
         return getBlockStore().getBlocksByRange(first, last);
     }
 
@@ -478,9 +538,10 @@ public class AionBlockchainImpl implements IAionBlockchain {
         }
 
         AionTransaction tx =
-                this.getBlockByHash(txInfo.getBlockHash())
-                        .getTransactionsList()
-                        .get(txInfo.getIndex());
+                (AionTransaction)
+                        this.getBlockByHash(txInfo.getBlockHash())
+                                .getTransactionsList()
+                                .get(txInfo.getIndex());
         txInfo.setTransaction(tx);
         return txInfo;
     }
@@ -493,7 +554,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     @Override
-    public AionBlock getBlockByHash(byte[] hash) {
+    public Block getBlockByHash(byte[] hash) {
         return getBlockStore().getBlockByHash(hash);
     }
 
@@ -1309,15 +1370,16 @@ public class AionBlockchainImpl implements IAionBlockchain {
                 boolean incrementSenderNonce = true;
                 boolean checkBlockEnergyLimit = true;
 
-                List<AionTxExecSummary> executionSummaries = BulkExecutor.executeAllTransactionsInBlock(
-                    block,
-                    track,
-                    isLocalCall,
-                    incrementSenderNonce,
-                    fork040Enable,
-                    checkBlockEnergyLimit,
-                    LOGGER_VM,
-                    getPostExecutionWorkForGeneratePreBlock(repository));
+                List<AionTxExecSummary> executionSummaries =
+                        BulkExecutor.executeAllTransactionsInBlock(
+                                block,
+                                track,
+                                isLocalCall,
+                                incrementSenderNonce,
+                                fork040Enable,
+                                checkBlockEnergyLimit,
+                                LOGGER_VM,
+                                getPostExecutionWorkForGeneratePreBlock(repository));
 
                 for (AionTxExecSummary summary : executionSummaries) {
                     if (!summary.isRejected()) {
@@ -1361,15 +1423,16 @@ public class AionBlockchainImpl implements IAionBlockchain {
                 boolean incrementSenderNonce = true;
                 boolean checkBlockEnergyLimit = false;
 
-                List<AionTxExecSummary> executionSummaries = BulkExecutor.executeAllTransactionsInBlock(
-                    block,
-                    track,
-                    isLocalCall,
-                    incrementSenderNonce,
-                    fork040Enable,
-                    checkBlockEnergyLimit,
-                    LOGGER_VM,
-                    getPostExecutionWorkForApplyBlock(repository));
+                List<AionTxExecSummary> executionSummaries =
+                        BulkExecutor.executeAllTransactionsInBlock(
+                                block,
+                                track,
+                                isLocalCall,
+                                incrementSenderNonce,
+                                fork040Enable,
+                                checkBlockEnergyLimit,
+                                LOGGER_VM,
+                                getPostExecutionWorkForApplyBlock(repository));
 
                 for (AionTxExecSummary summary : executionSummaries) {
                     receipts.add(summary.getReceipt());
@@ -1453,7 +1516,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     @Override
-    public boolean storePendingStatusBlock(AionBlock block) {
+    public boolean storePendingStatusBlock(Block block) {
         try {
             return repository.getPendingBlockStore().addStatusBlock(block);
         } catch (Exception e) {
@@ -1463,7 +1526,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     @Override
-    public int storePendingBlockRange(List<AionBlock> blocks) {
+    public int storePendingBlockRange(List<Block> blocks) {
         try {
             return repository.getPendingBlockStore().addBlockRange(blocks);
         } catch (Exception e) {
@@ -1493,6 +1556,17 @@ public class AionBlockchainImpl implements IAionBlockchain {
             LOG.error("Unable to generate next LIGHTNING request base due to: ", e);
             return current;
         }
+    }
+
+    @Override
+    public void dropImported(long level, List<ByteArrayWrapper> ranges,
+        Map<ByteArrayWrapper, List<Block>> blocks) {
+
+    }
+
+    @Override
+    public void setBestBlock(Block block) {
+
     }
 
     @Override
@@ -1836,7 +1910,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     @Override
-    public synchronized boolean recoverWorldState(Repository repository, AionBlock block) {
+    public synchronized boolean recoverWorldState(Repository repository, Block block) {
         if (block == null) {
             LOG.error("World state recovery attempted with null block.");
             return false;
@@ -1858,11 +1932,11 @@ public class AionBlockchainImpl implements IAionBlockchain {
         // keeping track of the original root
         byte[] originalRoot = repo.getRoot();
 
-        Deque<AionBlock> dirtyBlocks = new ArrayDeque<>();
+        Deque<Block> dirtyBlocks = new ArrayDeque<>();
         // already known to be missing the state
         dirtyBlocks.push(block);
 
-        AionBlock other = block;
+        Block other = block;
 
         // find all the blocks missing a world state
         do {
@@ -1920,7 +1994,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     }
 
     @Override
-    public synchronized boolean recoverIndexEntry(Repository repository, AionBlock block) {
+    public synchronized boolean recoverIndexEntry(Repository repository, Block block) {
         if (block == null) {
             LOG.error("Index recovery attempted with null block.");
             return false;
@@ -1937,11 +2011,11 @@ public class AionBlockchainImpl implements IAionBlockchain {
 
         AionRepositoryImpl repo = (AionRepositoryImpl) repository;
 
-        Deque<AionBlock> dirtyBlocks = new ArrayDeque<>();
+        Deque<Block> dirtyBlocks = new ArrayDeque<>();
         // already known to be missing the state
         dirtyBlocks.push(block);
 
-        AionBlock other = block;
+        Block other = block;
 
         // find all the blocks missing a world state
         do {
@@ -2030,12 +2104,71 @@ public class AionBlockchainImpl implements IAionBlockchain {
         }
     }
 
-    @Override
     public BigInteger getTotalDifficultyByHash(Hash256 hash) {
         if (hash == null) {
             throw new NullPointerException();
         }
         return this.getBlockStore().getTotalDifficultyForHash(hash.toBytes());
+    }
+
+    @Override
+    public BigInteger getPowTotalDifficulty() {
+        return null;
+    }
+
+    @Override
+    public void setPowTotalDifficulty(BigInteger totalDifficulty) {
+
+    }
+
+    @Override
+    public BigInteger getPowTotalDifficultyByHash(Hash256 hash) {
+        return null;
+    }
+
+    @Override
+    public AionPoSBlock getPowBlockByNumber(long number) {
+        return null;
+    }
+
+    @Override
+    public AionPoSBlock getPowBlockByHash(byte[] hash) {
+        return null;
+    }
+
+    @Override
+    public AionPoSBlock getBestPowBlock() {
+        return null;
+    }
+
+    @Override
+    public BigInteger getPosTotalDifficulty() {
+        return null;
+    }
+
+    @Override
+    public void setPosTotalDifficulty(BigInteger totalDifficulty) {
+
+    }
+
+    @Override
+    public BigInteger getPosTotalDifficultyByHash(Hash256 hash) {
+        return null;
+    }
+
+    @Override
+    public AionBlock getPosBlockByNumber(long number) {
+        return null;
+    }
+
+    @Override
+    public AionBlock getPosBlockByHash(byte[] hash) {
+        return null;
+    }
+
+    @Override
+    public AionBlock getBestPosBlock() {
+        return null;
     }
 
     /**
@@ -2050,7 +2183,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     private class State {
 
         AionRepositoryImpl savedRepo = repository;
-        AionBlock savedBest = bestBlock;
+        Block savedBest = bestBlock;
         BigInteger savedTD = totalDifficulty;
     }
 
@@ -2058,7 +2191,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
      * @implNote this method only can be called by the aionhub for data recovery purpose.
      * @param blk the best block after database recovered or revered.
      */
-    void resetPubBestBlock(AionBlock blk) {
+    void resetPubBestBlock(Block blk) {
         pubBestBlock = blk;
     }
 }
