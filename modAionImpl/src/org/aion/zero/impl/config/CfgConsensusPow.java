@@ -18,7 +18,10 @@ public final class CfgConsensusPow extends CfgConsensus {
 
     CfgConsensusPow() {
         this.mining = false;
+        this.staking = false;
         this.minerAddress = AddressUtils.ZERO_ADDRESS.toString();
+        this.stakerAddress = AddressUtils.ZERO_ADDRESS.toString();
+
         this.cpuMineThreads =
                 (byte)
                         (Runtime.getRuntime().availableProcessors()
@@ -30,9 +33,14 @@ public final class CfgConsensusPow extends CfgConsensus {
 
     private boolean mining;
 
+    private boolean staking;
+
     private boolean seed;
 
     private String minerAddress;
+
+    //TODO: should separate config to pos class later
+    private String stakerAddress;
 
     private byte cpuMineThreads;
 
@@ -49,11 +57,17 @@ public final class CfgConsensusPow extends CfgConsensus {
                         case "mining":
                             this.mining = Boolean.parseBoolean(Cfg.readValue(sr));
                             break;
+                        case "staking":
+                            this.staking = Boolean.parseBoolean(Cfg.readValue(sr));
+                            break;
                         case "seed":
                             this.seed = Boolean.parseBoolean(Cfg.readValue(sr));
                             break;
                         case "miner-address":
                             this.minerAddress = Cfg.readValue(sr);
+                            break;
+                        case "staker-address":
+                            this.stakerAddress = Cfg.readValue(sr);
                             break;
                         case "cpu-mine-threads":
                             this.cpuMineThreads = Byte.valueOf(Cfg.readValue(sr));
@@ -92,8 +106,18 @@ public final class CfgConsensusPow extends CfgConsensus {
             xmlWriter.writeEndElement();
 
             xmlWriter.writeCharacters("\r\n\t\t");
+            xmlWriter.writeStartElement("staking");
+            xmlWriter.writeCharacters(this.getMining() + "");
+            xmlWriter.writeEndElement();
+
+            xmlWriter.writeCharacters("\r\n\t\t");
             xmlWriter.writeStartElement("miner-address");
             xmlWriter.writeCharacters(this.getMinerAddress());
+            xmlWriter.writeEndElement();
+
+            xmlWriter.writeCharacters("\r\n\t\t");
+            xmlWriter.writeStartElement("staker-address");
+            xmlWriter.writeCharacters(this.getStakerAddress());
             xmlWriter.writeEndElement();
 
             xmlWriter.writeCharacters("\r\n\t\t");
@@ -134,8 +158,16 @@ public final class CfgConsensusPow extends CfgConsensus {
         this.mining = value;
     }
 
+    public void setStaking(final boolean value) {
+        this.staking = value;
+    }
+
     public boolean getMining() {
         return this.mining;
+    }
+
+    public boolean getStaking() {
+        return this.staking;
     }
 
     public byte getCpuMineThreads() {
@@ -149,6 +181,10 @@ public final class CfgConsensusPow extends CfgConsensus {
 
     public String getMinerAddress() {
         return this.minerAddress;
+    }
+
+    public String getStakerAddress() {
+        return this.stakerAddress;
     }
 
     public CfgEnergyStrategy getEnergyStrategy() {

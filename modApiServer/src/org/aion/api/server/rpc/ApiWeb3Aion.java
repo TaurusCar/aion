@@ -1757,6 +1757,8 @@ public class ApiWeb3Aion extends ApiAion {
         obj.put("threads", config.getCpuMineThreads());
         obj.put("extraData", config.getExtraData());
         obj.put("isSeed", config.isSeed());
+        obj.put("staking", config.getStaking());
+        obj.put("stakerAddress", config.getStakerAddress());
 
         // base.consensus.energyStrategy
         CfgEnergyStrategy nrg = config.getEnergyStrategy();

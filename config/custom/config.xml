@@ -45,8 +45,10 @@
 		<compact enabled="false" slow-import="1000" frequency="600000"></compact>
 	</sync>
 	<consensus>
-		<mining>true</mining>
+		<mining>false</mining>
+                <staking>true</staking>
 		<miner-address>0000000000000000000000000000000000000000000000000000000000000000</miner-address>
+                <staker-address>0000000000000000000000000000000000000000000000000000000000000000</staker-address>
 		<cpu-mine-threads>2</cpu-mine-threads>
 		<extra-data>AION</extra-data>
 		<nrg-strategy>
