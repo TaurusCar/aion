@@ -7,15 +7,15 @@ import java.util.List;
 import org.aion.mcf.blockchain.IChainCfg;
 import org.aion.mcf.core.IDifficultyCalculator;
 import org.aion.mcf.valid.GrandParentDependantBlockHeaderRule;
-import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
+import org.aion.zero.types.StakedBlockHeader;
 
 /** Checks block's difficulty against calculated difficulty value */
-public class AionDifficultyRule extends GrandParentDependantBlockHeaderRule<A0BlockHeader> {
+public class PoSDifficultyRule extends GrandParentDependantBlockHeaderRule<StakedBlockHeader> {
 
     private IDifficultyCalculator diffCalc;
 
-    public AionDifficultyRule(IChainCfg<AionTransaction> configuration) {
+    public PoSDifficultyRule(IChainCfg<AionTransaction> configuration) {
         this.diffCalc = configuration.getDifficultyCalculator();
     }
 
@@ -29,9 +29,9 @@ public class AionDifficultyRule extends GrandParentDependantBlockHeaderRule<A0Bl
      */
     @Override
     public boolean validate(
-            A0BlockHeader grandParent,
-            A0BlockHeader parent,
-            A0BlockHeader current,
+            StakedBlockHeader grandParent,
+            StakedBlockHeader parent,
+            StakedBlockHeader current,
             List<RuleError> errors) {
 
         BigInteger currDiff = current.getDifficultyBI();

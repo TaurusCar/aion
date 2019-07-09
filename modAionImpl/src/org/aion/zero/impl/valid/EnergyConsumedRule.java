@@ -2,16 +2,17 @@ package org.aion.zero.impl.valid;
 
 import java.util.List;
 import org.aion.mcf.blockchain.valid.BlockHeaderRule;
+import org.aion.mcf.types.AbstractBlockHeader;
 import org.aion.zero.types.A0BlockHeader;
 
 /**
  * Rule for checking that energyConsumed does not exceed energyLimit:
  * assert(blockHeader.energyConsumed <= blockHeader.energyLimit)
  */
-public class EnergyConsumedRule extends BlockHeaderRule<A0BlockHeader> {
+public class EnergyConsumedRule<H extends AbstractBlockHeader> extends BlockHeaderRule<H> {
 
     @Override
-    public boolean validate(A0BlockHeader blockHeader, List<RuleError> error) {
+    public boolean validate(H blockHeader, List<RuleError> error) {
         if (blockHeader.getEnergyConsumed() > blockHeader.getEnergyLimit()) {
             addError(
                     formatError(blockHeader.getEnergyConsumed(), blockHeader.getEnergyLimit()),
