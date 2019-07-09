@@ -1,16 +1,15 @@
 package org.aion.zero.types;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
-public class A0BlockHeaderVersion {
-    public static byte V1 = 1;
+public class BlockHeaderSealType {
 
     private static Set<Byte> active =
             new HashSet<>() {
                 {
-                    this.add(V1);
+                    this.add((byte) 0x01);
+                    this.add((byte) 0x02);
                 }
             };
 
@@ -18,12 +17,11 @@ public class A0BlockHeaderVersion {
         return active.contains(version);
     }
 
-    public static String activeVersions() {
-        String toReturn = "{";
+    public static String activeTypes() {
+        StringBuilder toReturn = new StringBuilder("{");
 
-        Iterator<Byte> it = active.iterator();
-        while (it.hasNext()) {
-            toReturn += it.next();
+        for (Byte aByte : active) {
+            toReturn.append(aByte);
         }
 
         return toReturn + "}";
