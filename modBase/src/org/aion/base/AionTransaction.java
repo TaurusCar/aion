@@ -55,7 +55,7 @@ public class AionTransaction implements Cloneable {
      * (including public key recovery bits) */
     protected ISignature signature;
 
-    public static final int RLP_TX_NONCE = 0,
+    private static final int RLP_TX_NONCE = 0,
             RLP_TX_TO = 1,
             RLP_TX_VALUE = 2,
             RLP_TX_DATA = 3,
@@ -64,9 +64,6 @@ public class AionTransaction implements Cloneable {
             RLP_TX_NRGPRICE = 6,
             RLP_TX_TYPE = 7,
             RLP_TX_SIG = 8;
-
-    /* Tx in encoded form */
-    protected byte[] rlpEncoded;
 
     private byte[] rlpRaw;
 
@@ -78,7 +75,6 @@ public class AionTransaction implements Cloneable {
     private long nrgConsume = 0;
 
     public AionTransaction(byte[] encodedData) {
-        this.rlpEncoded = encodedData;
         rlpParse(encodedData);
     }
 
@@ -137,6 +133,24 @@ public class AionTransaction implements Cloneable {
         this(nonce, to, value, data, nrg, nrgPrice);
         this.from = from;
         this.type = txType;
+    }
+
+    // constructor for explicitly setting a transaction type.
+    public AionTransaction(
+            byte[] nonce,
+            AionAddress from,
+            AionAddress to,
+            byte[] value,
+            byte[] data,
+            long nrg,
+            long nrgPrice,
+            byte txType,
+            ISignature signature,
+            byte[] timeStamp) {
+
+        this(nonce, from, to, value, data, nrg, nrgPrice, txType);
+        this.signature = signature;
+        this.timeStamp = timeStamp;
     }
 
     @Override
@@ -294,13 +308,11 @@ public class AionTransaction implements Cloneable {
     public void sign(ECKey key) throws MissingPrivateKeyException {
         this.timeStamp = ByteUtil.longToBytes(TimeInstant.now().toEpochMicro());
         this.signature = key.sign(this.getRawHash());
-        this.rlpEncoded = null;
     }
 
     public void signWithSecTimeStamp(ECKey key) throws MissingPrivateKeyException {
         this.timeStamp = ByteUtil.longToBytes(TimeInstant.now().toEpochSec() * 1_000_000L);
         this.signature = key.sign(this.getRawHash());
-        this.rlpEncoded = null;
     }
 
     @Override
@@ -374,10 +386,6 @@ public class AionTransaction implements Cloneable {
 
     public byte[] getEncoded() {
 
-        if (rlpEncoded != null) {
-            return rlpEncoded;
-        }
-
         byte[] nonce = RLP.encodeElement(this.nonce);
 
         byte[] to;
@@ -402,10 +410,8 @@ public class AionTransaction implements Cloneable {
         }
 
         sigs = RLP.encodeElement(signature.toBytes());
-        this.rlpEncoded =
-                RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type, sigs);
 
-        return rlpEncoded;
+        return RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type, sigs);
     }
 
     @Override
