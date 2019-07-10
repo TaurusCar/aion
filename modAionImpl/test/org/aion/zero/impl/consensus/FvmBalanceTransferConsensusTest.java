@@ -79,6 +79,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         bridge,
                         amount.toByteArray(),
                         new byte[] {},
@@ -139,6 +140,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         bridge,
                         BigInteger.ZERO.toByteArray(),
                         Hex.decode(
@@ -199,6 +201,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         blake2b,
                         amount.toByteArray(),
                         new byte[] {},
@@ -264,6 +267,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         blake2b,
                         amount.toByteArray(),
                         Hex.decode("abcdef0123456789"),
@@ -332,6 +336,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         blake2b,
                         BigInteger.ZERO.toByteArray(),
                         Hex.decode("abcdef0123456789"),
@@ -779,6 +784,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         null,
                         amount.toByteArray(),
                         getNonpayableConstructorContractBytes(),
@@ -794,6 +800,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         null,
                         amount.toByteArray(),
                         getPayableConstructorContractBytes(),
@@ -808,6 +815,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         null,
                         BigInteger.ZERO.toByteArray(),
                         getPayableFallbackContractBytes(),
@@ -822,6 +830,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         null,
                         BigInteger.ZERO.toByteArray(),
                         getNonpayableFallbackContractBytes(),
@@ -836,6 +845,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         null,
                         BigInteger.ZERO.toByteArray(),
                         getPayableContractBytes(),
@@ -851,6 +861,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ONE.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         contract,
                         amount.toByteArray(),
                         callNonpayableFunctionEncoding(),
@@ -866,6 +877,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ONE.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         contract,
                         amount.toByteArray(),
                         new byte[0],
@@ -881,6 +893,7 @@ public class FvmBalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ONE.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         contract,
                         amount.toByteArray(),
                         callPayableFunctionEncoding(),

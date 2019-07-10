@@ -101,16 +101,18 @@ public class BlockchainIntegrationTest {
         StandaloneBlockchain bc = bundle.bc;
 
         // (byte[] nonce, byte[] from, byte[] to, byte[] value, byte[] data)
+        ECKey key = bundle.privateKeys.get(0);
         AionTransaction tx =
                 new AionTransaction(
                         BigInteger.valueOf(1).toByteArray(),
+                        new AionAddress(key.getAddress()),
                         receiverAddress,
                         BigInteger.valueOf(100).toByteArray(),
                         ByteUtil.EMPTY_BYTE_ARRAY,
                         1L,
                         1L);
 
-        tx.sign(bundle.privateKeys.get(0));
+        tx.sign(key);
         AionBlock block = bc.createNewBlock(bc.getBestBlock(), Collections.singletonList(tx), true);
 
         assertThat(block.getTransactionsList()).isEmpty();
@@ -141,6 +143,7 @@ public class BlockchainIntegrationTest {
         AionTransaction tx =
                 new AionTransaction(
                         BigInteger.valueOf(0).toByteArray(),
+                        new AionAddress(sender.getAddress()),
                         receiverAddress,
                         BigInteger.valueOf(100).toByteArray(),
                         ByteUtil.EMPTY_BYTE_ARRAY,
@@ -209,6 +212,7 @@ public class BlockchainIntegrationTest {
         AionTransaction tx =
                 new AionTransaction(
                         BigInteger.valueOf(0).toByteArray(),
+                        new AionAddress(sender.getAddress()),
                         receiverAddress,
                         BigInteger.valueOf(100).toByteArray(),
                         ByteUtil.EMPTY_BYTE_ARRAY,
@@ -245,6 +249,7 @@ public class BlockchainIntegrationTest {
         AionTransaction contractDeploymentTx =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(sender.getAddress()),
                         null,
                         BigInteger.ZERO.toByteArray(),
                         ByteUtil.hexStringToBytes(cryptoKittiesCode),

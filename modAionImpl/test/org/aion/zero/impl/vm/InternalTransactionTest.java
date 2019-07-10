@@ -109,6 +109,7 @@ public class InternalTransactionTest {
         AionTransaction tx1 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         null,
                         new byte[0],
                         ByteUtil.hexStringToBytes(contractA),
@@ -120,6 +121,7 @@ public class InternalTransactionTest {
         AionTransaction tx2 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         null,
                         new byte[0],
                         ByteUtil.hexStringToBytes(contractB),
@@ -145,6 +147,7 @@ public class InternalTransactionTest {
         AionTransaction tx3 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         addressB,
                         new byte[0],
                         ByteUtil.hexStringToBytes("0x26121ff0"),
@@ -168,6 +171,7 @@ public class InternalTransactionTest {
         AionTransaction tx4 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         addressA,
                         new byte[0],
                         ByteUtil.merge(
@@ -195,6 +199,7 @@ public class InternalTransactionTest {
         AionTransaction tx6 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         addressA,
                         new byte[0],
                         ByteUtil.merge(
@@ -247,6 +252,7 @@ public class InternalTransactionTest {
         AionTransaction tx1 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         null,
                         new byte[0],
                         ByteUtil.hexStringToBytes(contractA),
@@ -269,6 +275,7 @@ public class InternalTransactionTest {
         AionTransaction tx2 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         addressA,
                         new byte[0],
                         ByteUtil.merge(
@@ -318,6 +325,7 @@ public class InternalTransactionTest {
         AionTransaction tx1 =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         null,
                         new byte[0],
                         ByteUtil.hexStringToBytes(contractA),
@@ -366,6 +374,7 @@ public class InternalTransactionTest {
         AionTransaction tx =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         internalContractAddress,
                         BigInteger.ONE.toByteArray(),
                         new byte[0],
@@ -393,6 +402,7 @@ public class InternalTransactionTest {
         tx =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         null,
                         new byte[0],
                         ByteUtil.hexStringToBytes(contractA),
@@ -419,6 +429,7 @@ public class InternalTransactionTest {
         tx =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerAccount.getAddress()),
                         null,
                         new byte[0],
                         ByteUtil.hexStringToBytes(contractA),

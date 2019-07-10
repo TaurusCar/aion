@@ -87,6 +87,7 @@ public class BalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         to,
                         amount.toByteArray(),
                         new byte[0],
@@ -135,6 +136,7 @@ public class BalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         BigInteger.ZERO.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         to,
                         amount.toByteArray(),
                         new byte[0],
@@ -160,6 +162,7 @@ public class BalanceTransferConsensusTest {
         transaction =
                 new AionTransaction(
                         BigInteger.ONE.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         to,
                         amount.toByteArray(),
                         new byte[0],
@@ -187,6 +190,7 @@ public class BalanceTransferConsensusTest {
         transaction =
                 new AionTransaction(
                         BigInteger.ONE.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         to,
                         amount.toByteArray(),
                         new byte[0],
@@ -374,6 +378,7 @@ public class BalanceTransferConsensusTest {
         AionTransaction transaction =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         recipient,
                         amount.toByteArray(),
                         new byte[] {0x1, 0x2, 0x3},

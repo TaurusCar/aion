@@ -84,7 +84,6 @@ public class TransactionExecutorTest {
 
     @Test
     public void testExecutor() throws IOException, VMException {
-        AionAddress to = getNewRecipient(true);
         byte[] deployCode = ContractUtils.getContractDeployer("ByteArrayMap.sol", "ByteArrayMap");
         long nrg = 1_000_000;
         long nrgPrice = 1;
@@ -93,7 +92,13 @@ public class TransactionExecutorTest {
 
         AionTransaction tx =
                 new AionTransaction(
-                        nonce.toByteArray(), to, value.toByteArray(), deployCode, nrg, nrgPrice);
+                        nonce.toByteArray(),
+                        new AionAddress(deployerKey.getAddress()),
+                        null,
+                        value.toByteArray(),
+                        deployCode,
+                        nrg,
+                        nrgPrice);
         tx.sign(deployerKey);
         assertTrue(tx.isContractCreationTransaction());
         assertEquals(Builder.DEFAULT_BALANCE, blockchain.getRepository().getBalance(deployer));
@@ -129,7 +134,6 @@ public class TransactionExecutorTest {
 
     @Test
     public void testExecutorBlind() throws IOException {
-        AionAddress to = getNewRecipient(true);
         byte[] deployCode = ContractUtils.getContractDeployer("ByteArrayMap.sol", "ByteArrayMap");
         long nrg = 1_000_000;
         long nrgPrice = 1;
@@ -138,7 +142,13 @@ public class TransactionExecutorTest {
 
         AionTransaction tx =
                 new AionTransaction(
-                        nonce.toByteArray(), to, value.toByteArray(), deployCode, nrg, nrgPrice);
+                        nonce.toByteArray(),
+                        new AionAddress(deployerKey.getAddress()),
+                        null,
+                        value.toByteArray(),
+                        deployCode,
+                        nrg,
+                        nrgPrice);
         tx.sign(deployerKey);
         assertTrue(tx.isContractCreationTransaction());
 
@@ -178,6 +188,7 @@ public class TransactionExecutorTest {
         AionTransaction tx =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerKey.getAddress()),
                         contract,
                         BigInteger.ZERO.toByteArray(),
                         callingCode,
@@ -207,6 +218,7 @@ public class TransactionExecutorTest {
         tx =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerKey.getAddress()),
                         contract,
                         BigInteger.ZERO.toByteArray(),
                         callingCode,
@@ -257,6 +269,7 @@ public class TransactionExecutorTest {
         AionTransaction tx =
                 new AionTransaction(
                         nonce.toByteArray(),
+                        new AionAddress(deployerKey.getAddress()),
                         contract,
                         BigInteger.ZERO.toByteArray(),
                         callingCode,
@@ -283,7 +296,6 @@ public class TransactionExecutorTest {
     // <-----------------------------------------HELPERS------------------------------------------->
 
     private AionAddress deployByteArrayContract() throws IOException {
-        AionAddress to = getNewRecipient(true);
         byte[] deployCode = ContractUtils.getContractDeployer("ByteArrayMap.sol", "ByteArrayMap");
         long nrg = 1_000_000;
         long nrgPrice = 1;
@@ -292,7 +304,13 @@ public class TransactionExecutorTest {
 
         AionTransaction tx =
                 new AionTransaction(
-                        nonce.toByteArray(), to, value.toByteArray(), deployCode, nrg, nrgPrice);
+                        nonce.toByteArray(),
+                        new AionAddress(deployerKey.getAddress()),
+                        null,
+                        value.toByteArray(),
+                        deployCode,
+                        nrg,
+                        nrgPrice);
         tx.sign(deployerKey);
         assertTrue(tx.isContractCreationTransaction());
 

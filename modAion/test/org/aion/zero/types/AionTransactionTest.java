@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.aion.base.AionTransaction;
 import org.aion.base.TransactionRlpCodec;
+import org.aion.crypto.ECKey;
 import org.aion.crypto.ECKeyFac;
 import org.aion.mcf.vm.types.DataWordImpl;
 import org.aion.types.AionAddress;
@@ -39,8 +40,18 @@ public class AionTransactionTest {
         long nrgPrice = 0;
         byte type = 0;
 
-        AionTransaction tx = new AionTransaction(nonce, to, value, data, nrg, nrgPrice, type);
-        tx.sign(ECKeyFac.inst().create());
+        ECKey key = ECKeyFac.inst().create();
+        AionTransaction tx =
+                new AionTransaction(
+                        nonce,
+                        new AionAddress(key.getAddress()),
+                        to,
+                        value,
+                        data,
+                        nrg,
+                        nrgPrice,
+                        type);
+        tx.sign(key);
 
         AionTransaction tx2 =
                 TransactionRlpCodec.decodeTransaction(TransactionRlpCodec.getEncoding(tx));
@@ -58,8 +69,18 @@ public class AionTransactionTest {
         long nrgPrice = RandomUtils.nextLong(0, Long.MAX_VALUE);
         byte type = 1;
 
-        AionTransaction tx = new AionTransaction(nonce, to, value, data, nrg, nrgPrice, type);
-        tx.sign(ECKeyFac.inst().create());
+        ECKey key = ECKeyFac.inst().create();
+        AionTransaction tx =
+                new AionTransaction(
+                        nonce,
+                        new AionAddress(key.getAddress()),
+                        to,
+                        value,
+                        data,
+                        nrg,
+                        nrgPrice,
+                        type);
+        tx.sign(key);
 
         AionTransaction tx2 = tx.clone();
 

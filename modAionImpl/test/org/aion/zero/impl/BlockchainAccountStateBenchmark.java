@@ -245,6 +245,7 @@ public class BlockchainAccountStateBenchmark {
         AionTransaction creationTx =
                 new AionTransaction(
                         accountNonce.toByteArray(),
+                        new AionAddress(key.getAddress()),
                         null,
                         BigInteger.ZERO.toByteArray(),
                         ByteUtil.hexStringToBytes(STATE_EXPANSION_BYTECODE),
@@ -282,6 +283,7 @@ public class BlockchainAccountStateBenchmark {
             AionTransaction sendTransaction =
                     new AionTransaction(
                             accountNonce.toByteArray(),
+                            new AionAddress(key.getAddress()),
                             contractAddress,
                             BigInteger.ZERO.toByteArray(),
                             callData,

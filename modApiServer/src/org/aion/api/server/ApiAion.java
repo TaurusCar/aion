@@ -574,6 +574,7 @@ public abstract class ApiAion extends Api {
                 AionTransaction tx =
                         new AionTransaction(
                                 nonce,
+                                new AionAddress(key.getAddress()),
                                 _params.getTo(),
                                 _params.getValue().toByteArray(),
                                 _params.getData(),
@@ -633,6 +634,7 @@ public abstract class ApiAion extends Api {
                 AionTransaction tx =
                         new AionTransaction(
                                 nonce,
+                                new AionAddress(key.getAddress()),
                                 _params.getTo(),
                                 _params.getValue().toByteArray(),
                                 _params.getData(),
