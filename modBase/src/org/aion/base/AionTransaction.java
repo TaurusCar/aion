@@ -1,16 +1,13 @@
 package org.aion.base;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import org.aion.crypto.ECKey;
 import org.aion.crypto.ECKey.MissingPrivateKeyException;
 import org.aion.crypto.HashUtil;
 import org.aion.crypto.ISignature;
-import org.aion.crypto.SignatureFac;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.rlp.RLP;
-import org.aion.rlp.RLPList;
 import org.aion.types.AionAddress;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.time.TimeInstant;
@@ -20,9 +17,6 @@ import org.slf4j.Logger;
 public class AionTransaction implements Cloneable {
 
     protected static final Logger LOG = AionLoggerFactory.getLogger(LogEnum.GEN.toString());
-
-    /* SHA3 hash of the RLP encoded transaction */
-    protected byte[] hash;
 
     /* the amount of ether to transfer (calculated as wei) */
     protected byte[] value;
@@ -55,28 +49,12 @@ public class AionTransaction implements Cloneable {
      * (including public key recovery bits) */
     protected ISignature signature;
 
-    private static final int RLP_TX_NONCE = 0,
-            RLP_TX_TO = 1,
-            RLP_TX_VALUE = 2,
-            RLP_TX_DATA = 3,
-            RLP_TX_TIMESTAMP = 4,
-            RLP_TX_NRG = 5,
-            RLP_TX_NRGPRICE = 6,
-            RLP_TX_TYPE = 7,
-            RLP_TX_SIG = 8;
-
-    private byte[] rlpRaw;
-
     /** These four members doesn't include into the RLP encode data */
     private long txIndexInBlock = 0;
 
     private long blockNumber = 0;
     private byte[] blockHash = null;
     private long nrgConsume = 0;
-
-    public AionTransaction(byte[] encodedData) {
-        rlpParse(encodedData);
-    }
 
     public AionTransaction(
             byte[] nonce,
@@ -163,55 +141,8 @@ public class AionTransaction implements Cloneable {
         return tx2;
     }
 
-    public void rlpParse(byte[] rlpEncoded) {
-
-        RLPList decodedTxList = RLP.decode2(rlpEncoded);
-        RLPList tx = (RLPList) decodedTxList.get(0);
-
-        this.nonce = tx.get(RLP_TX_NONCE).getRLPData();
-        this.value = tx.get(RLP_TX_VALUE).getRLPData();
-        this.data = tx.get(RLP_TX_DATA).getRLPData();
-
-        byte[] rlpTo = tx.get(RLP_TX_TO).getRLPData();
-        if (rlpTo == null || rlpTo.length == 0) {
-            this.to = null;
-        } else {
-            this.to = new AionAddress(tx.get(RLP_TX_TO).getRLPData());
-        }
-
-        this.timeStamp = tx.get(RLP_TX_TIMESTAMP).getRLPData();
-        this.nrg = new BigInteger(1, tx.get(RLP_TX_NRG).getRLPData()).longValue();
-        this.nrgPrice = new BigInteger(1, tx.get(RLP_TX_NRGPRICE).getRLPData()).longValue();
-        this.type = new BigInteger(1, tx.get(RLP_TX_TYPE).getRLPData()).byteValue();
-
-        byte[] sigs = tx.get(RLP_TX_SIG).getRLPData();
-        if (sigs != null) {
-            // Singature Factory will decode the signature based on the algo
-            // presetted in main() entry.
-            ISignature is = SignatureFac.fromBytes(sigs);
-            if (is != null) {
-                this.signature = is;
-            } else {
-                // still ok if signature is null, but log it out.
-                this.signature = null;
-                LOG.error("tx -> unable to decode signature");
-            }
-        } else {
-            LOG.error("tx -> no signature found");
-        }
-
-        this.hash = this.getTransactionHash();
-    }
-
     public byte[] getTransactionHash() {
-        if (hash != null) {
-            return hash;
-        }
-
-        byte[] plainMsg = this.getEncoded();
-        // cache it.
-        hash = HashUtil.h256(plainMsg);
-        return hash;
+        return HashUtil.h256(this.getEncoded());
     }
 
     public byte[] getRawHash() {
@@ -317,25 +248,9 @@ public class AionTransaction implements Cloneable {
 
     @Override
     public String toString() {
-        return toString(Integer.MAX_VALUE);
-    }
-
-    public String toString(int maxDataSize) {
-        String dataS;
-        if (data == null) {
-            dataS = "";
-        } else if (data.length < maxDataSize) {
-            dataS = ByteUtil.toHexString(data);
-        } else {
-            dataS =
-                    ByteUtil.toHexString(Arrays.copyOfRange(data, 0, maxDataSize))
-                            + "... ("
-                            + data.length
-                            + " bytes)";
-        }
         return "TransactionData ["
                 + "hash="
-                + ByteUtil.toHexString(hash)
+                + ByteUtil.toHexString(getTransactionHash())
                 + ", nonce="
                 + new BigInteger(1, nonce)
                 + ", receiveAddress="
@@ -343,7 +258,7 @@ public class AionTransaction implements Cloneable {
                 + ", value="
                 + new BigInteger(1, value)
                 + ", data="
-                + dataS
+                + ByteUtil.toHexString(data)
                 + ", timeStamp="
                 + ByteUtil.byteArrayToLong(timeStamp)
                 + ", Nrg="
@@ -359,10 +274,6 @@ public class AionTransaction implements Cloneable {
 
     /** For signatures you have to keep also RLP of the transaction without any signature data */
     private byte[] getEncodedRaw() {
-
-        if (rlpRaw != null) {
-            return rlpRaw;
-        }
 
         byte[] nonce = RLP.encodeElement(this.nonce);
 
@@ -380,8 +291,7 @@ public class AionTransaction implements Cloneable {
         byte[] nrgPrice = RLP.encodeLong(this.nrgPrice);
         byte[] type = RLP.encodeByte(this.type);
 
-        rlpRaw = RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type);
-        return rlpRaw;
+        return RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type);
     }
 
     public byte[] getEncoded() {
