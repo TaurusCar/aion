@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import org.aion.base.AionTransaction;
 import org.aion.base.TransactionRlpCodec;
+import org.aion.base.TransactionUtil;
 import org.aion.crypto.HashUtil;
 import org.aion.equihash.EquihashMiner;
 import org.aion.evtmgr.IEvent;
@@ -1105,7 +1106,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
             AionTransaction tx = receipt.getTransaction();
             if (tx.isContractCreationTransaction() && receipt.isSuccessful()) {
                 repository.saveIndexedContractInformation(
-                        tx.getContractAddress(),
+                        TransactionUtil.calculateContractAddress(tx),
                         block.getNumber(),
                         TransactionTypeRule.isValidAVMContractDeployment(tx.getTargetVM())
                                 ? InternalVmType.AVM

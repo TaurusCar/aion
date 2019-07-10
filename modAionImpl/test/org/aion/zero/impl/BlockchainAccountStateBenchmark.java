@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import org.aion.base.AionTransaction;
+import org.aion.base.TransactionUtil;
 import org.aion.crypto.ECKey;
 import org.aion.crypto.HashUtil;
 import org.aion.db.impl.DBVendor;
@@ -218,11 +219,10 @@ public class BlockchainAccountStateBenchmark {
             AionTxInfo info = bc.getTransactionInfo(res.getRight());
             assertThat(info.getReceipt().isValid()).isTrue();
 
-            AionAddress contractAddress = info.getReceipt().getTransaction().getContractAddress();
+            AionTransaction tx = info.getReceipt().getTransaction();
+            AionAddress contractAddress = TransactionUtil.calculateContractAddress(tx);
 
-            byte[] contractCode =
-                    bc.getRepository()
-                            .getCode(info.getReceipt().getTransaction().getContractAddress());
+            byte[] contractCode = bc.getRepository().getCode(contractAddress);
 
             System.out.println("deployed contract code: " + ByteUtil.toHexString(contractCode));
             System.out.println("deployed at: " + contractAddress);
@@ -325,11 +325,10 @@ public class BlockchainAccountStateBenchmark {
             AionTxInfo info = bc.getTransactionInfo(res.getRight());
             assertThat(info.getReceipt().isValid()).isTrue();
 
-            AionAddress contractAddress = info.getReceipt().getTransaction().getContractAddress();
+            AionTransaction tx = info.getReceipt().getTransaction();
+            AionAddress contractAddress = TransactionUtil.calculateContractAddress(tx);
 
-            byte[] contractCode =
-                    bc.getRepository()
-                            .getCode(info.getReceipt().getTransaction().getContractAddress());
+            byte[] contractCode = bc.getRepository().getCode(contractAddress);
 
             System.out.println("deployed contract code: " + ByteUtil.toHexString(contractCode));
             System.out.println("deployed at: " + contractAddress);

@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import org.aion.base.AionTransaction;
+import org.aion.base.TransactionUtil;
 import org.aion.crypto.ECKey;
 import org.aion.crypto.HashUtil;
 import org.aion.mcf.core.ImportResult;
@@ -273,7 +274,8 @@ public class BlockchainIntegrationTest {
         ContractInformation ci =
                 blockchain
                         .getRepository()
-                        .getIndexedContractInformation(contractDeploymentTx.getContractAddress());
+                        .getIndexedContractInformation(
+                                TransactionUtil.calculateContractAddress(contractDeploymentTx));
         assertThat(ci).isNotNull();
         assertThat(ci.getInceptionBlock()).isEqualTo(block.getNumber());
         assertThat(ci.getVmUsed()).isEqualTo(InternalVmType.FVM);
