@@ -2,27 +2,37 @@ package org.aion.mcf.blockchain;
 
 import java.math.BigInteger;
 import org.aion.interfaces.block.Block;
-import org.aion.mcf.types.AbstractBlockHeader;
+import org.aion.mcf.core.AbstractTxInfo;
+import org.aion.mcf.db.IBlockStoreBase;
 import org.aion.vm.api.types.Hash256;
 
 /**
  * unity protocol blockchain interface.
  *
  * @param <BLK>
- * @param <BH>
  */
 @SuppressWarnings("rawtypes")
-public interface PowChain<BLK extends Block, BH extends AbstractBlockHeader> {
+public interface PowChain<BLK extends Block> {
 
-    BigInteger getPosTotalDifficulty();
+    BigInteger getTotalDifficulty();
 
-    void setPosTotalDifficulty(BigInteger totalDifficulty);
+    void setTotalDifficulty(BigInteger totalDifficulty);
 
-    BigInteger getPosTotalDifficultyByHash(Hash256 hash);
+    BigInteger getTotalDifficultyByHash(Hash256 hash);
 
-    BLK getPosBlockByNumber(long number);
+    //BLK getPowBlockByNumber(long number);
 
-    BLK getPosBlockByHash(byte[] hash);
+    //BLK getPowBlockByHash(byte[] hash);
 
-    BLK getBestPosBlock();
+    BLK getBlockByNumber(long number);
+
+    BLK getBlockByHash(byte[] hash);
+
+    IBlockStoreBase<?, ?> getBlockStore();
+
+    BLK getBestBlock();
+
+    AbstractTxInfo getTransactionInfo(byte[] hash);
+
+    void flush();
 }

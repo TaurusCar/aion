@@ -10,6 +10,7 @@ import org.aion.zero.impl.sync.Act;
 import org.aion.zero.impl.sync.msg.ReqBlocksHeaders;
 import org.aion.zero.impl.sync.msg.ResBlocksHeaders;
 import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 
 /**
@@ -58,7 +59,7 @@ public final class ReqBlocksHeadersHandler extends Handler {
                         take,
                         _displayId);
             }
-            List<A0BlockHeader> headers =
+            List<StakedBlockHeader> headers =
                     this.blockchain.getListOfHeadersStartFrom(
                             fromBlock, Math.min(take, MAX_NUM_OF_BLOCKS));
             ResBlocksHeaders rbhs = new ResBlocksHeaders(headers);

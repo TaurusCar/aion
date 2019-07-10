@@ -1,6 +1,6 @@
 package org.aion.zero.impl.core.energy;
 
-import org.aion.zero.types.A0BlockHeader;
+import org.aion.mcf.types.AbstractBlockHeader;
 
 public class DecayStrategy extends AbstractEnergyStrategyLimit {
 
@@ -9,7 +9,7 @@ public class DecayStrategy extends AbstractEnergyStrategyLimit {
     }
 
     @Override
-    protected long getEnergyLimitInternal(A0BlockHeader header) {
+    protected long getEnergyLimitInternal(AbstractBlockHeader header) {
         return decayingEnergyLimitStrategy(
                 header.getEnergyLimit(), header.getEnergyConsumed(), this.getEnergyDivisorLimit());
     }

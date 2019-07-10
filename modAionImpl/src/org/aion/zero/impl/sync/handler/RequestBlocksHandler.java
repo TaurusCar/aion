@@ -1,7 +1,9 @@
 package org.aion.zero.impl.sync.handler;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import org.aion.interfaces.block.Block;
 import org.aion.p2p.Ctrl;
 import org.aion.p2p.Handler;
 import org.aion.p2p.IP2pMgr;
@@ -13,6 +15,7 @@ import org.aion.zero.impl.sync.Act;
 import org.aion.zero.impl.sync.msg.RequestBlocks;
 import org.aion.zero.impl.sync.msg.ResponseBlocks;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.slf4j.Logger;
 
 /**
@@ -67,7 +70,7 @@ public final class RequestBlocksHandler extends Handler {
                             descending ? "DESC" : "ASC");
                 }
 
-                List<AionBlock> blockList = null;
+                List<AionPoSBlock> blockList = null;
                 try {
                     // retrieve blocks from block store depending on requested order
                     if (descending) {
@@ -82,7 +85,7 @@ public final class RequestBlocksHandler extends Handler {
                 if (blockList != null) {
                     // generate response with retrieved blocks
                     // TODO: check the message size and ensure that it fits predefined limits
-                    ResponseBlocks response = new ResponseBlocks(blockList);
+                    ResponseBlocks response = new ResponseBlocks(Collections.singletonList((Block)blockList));
                     // reply to request
                     this.p2p.send(peerId, displayId, response);
                 }
@@ -102,11 +105,11 @@ public final class RequestBlocksHandler extends Handler {
                 }
 
                 // check if block exists
-                AionBlock block = chain.getBlockByHash(startHash);
+                AionPoSBlock block = chain.getBlockByHash(startHash);
 
                 if (block != null) {
                     long start = block.getNumber();
-                    List<AionBlock> blockList = null;
+                    List<AionPoSBlock> blockList = null;
                     try {
                         // retrieve blocks from block store depending on requested order
                         if (descending) {
@@ -121,7 +124,7 @@ public final class RequestBlocksHandler extends Handler {
                     if (blockList != null && blockList.contains(block)) {
                         // generate response with retrieved blocks
                         // TODO: check the message size and ensure that it fits predefined limits
-                        ResponseBlocks response = new ResponseBlocks(blockList);
+                        ResponseBlocks response = new ResponseBlocks(Collections.singletonList((Block)blockList));
                         // reply to request
                         this.p2p.send(peerId, displayId, response);
                     } else {

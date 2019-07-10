@@ -209,11 +209,16 @@ public class Aion {
         IStakeRunner sr = null;
 
         if (!cfg.getConsensus().isSeed()) {
-            nm = ac.getBlockMiner();
+            //nm = ac.getBlockMiner();
+            sr = ac.getBlockMiner();
         }
 
-        if (nm != null) {
-            nm.delayedStartMining(10);
+//        if (nm != null) {
+//            nm.delayedStartMining(10);
+//        }
+
+        if (sr != null) {
+            sr.delayedStartStaking(10);
         }
 
         /*

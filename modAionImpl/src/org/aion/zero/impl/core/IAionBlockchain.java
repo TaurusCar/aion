@@ -7,25 +7,28 @@ import org.aion.mcf.core.IBlockchain;
 import org.aion.vm.api.types.ByteArrayWrapper;
 import org.aion.zero.impl.BlockContext;
 import org.aion.zero.impl.sync.DatabaseType;
-import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.impl.types.AionTxInfo;
-import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxReceipt;
+import org.aion.zero.types.StakedBlockHeader;
 
 /** aion blockchain interface. */
 public interface IAionBlockchain
-        extends IBlockchain<AionBlock, A0BlockHeader, AionTransaction, AionTxReceipt, AionTxInfo> {
+        extends IBlockchain<AionPoSBlock, StakedBlockHeader, AionTransaction, AionTxReceipt, AionTxInfo> {
 
-    AionBlock createNewBlock(
-            AionBlock parent, List<AionTransaction> transactions, boolean waitUntilBlockTime);
+    AionPoSBlock createNewBlock(
+        AionPoSBlock parent, List<AionTransaction> transactions, boolean waitUntilBlockTime);
+
+    AionPoSBlock createNewBlock(
+        AionPoSBlock parent, List<AionTransaction> transactions, byte[] seed);
 
     BlockContext createNewBlockContext(
-            AionBlock parent, List<AionTransaction> transactions, boolean waitUntilBlockTime);
+        AionPoSBlock parent, List<AionTransaction> transactions, boolean waitUntilBlockTime);
 
-    AionBlock getBestBlock();
+    AionPoSBlock getBestBlock();
 
-    AionBlock getBlockByNumber(long num);
+    AionPoSBlock getBlockByNumber(long num);
 
     /**
      * Returns a range of main chain blocks.
@@ -41,21 +44,21 @@ public interface IAionBlockchain
      *     first > last} the blocks are returned in descending order of their height, otherwise when
      *     {@code first < last} the blocks are returned in ascending order of their height.
      */
-    List<AionBlock> getBlocksByRange(long first, long last);
+    List<AionPoSBlock> getBlocksByRange(long first, long last);
 
     /**
      * Recovery functionality for rebuilding the world state.
      *
      * @return {@code true} if the recovery was successful, {@code false} otherwise
      */
-    boolean recoverWorldState(Repository repository, AionBlock block);
+    boolean recoverWorldState(Repository repository, AionPoSBlock block);
 
     /**
      * Recovery functionality for recreating the block info in the index database.
      *
      * @return {@code true} if the recovery was successful, {@code false} otherwise
      */
-    boolean recoverIndexEntry(Repository repository, AionBlock block);
+    boolean recoverIndexEntry(Repository repository, AionPoSBlock block);
 
     /**
      * Heuristic for skipping the call to tryToConnect with very large or very small block number.

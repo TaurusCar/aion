@@ -708,7 +708,7 @@ public class PendingBlockStore implements Flushable, Closeable {
     /**
      * Generates a number greater or equal to the given {@code current} number representing the base
      * value for a subsequent LIGHTNING request. The returned base is generated taking into
-     * consideration the status updates from {@link #addStatusBlock(AionBlock)} and the {@code
+     * consideration the status updates from {@link #addStatusBlock(AionPoSBlock)} and the {@code
      * knownBest} value for the peer for which this functionality is requested.
      *
      * <p>The bases are generated in an optimistic continuous manner based on the following

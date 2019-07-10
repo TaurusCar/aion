@@ -8,6 +8,7 @@ import java.util.List;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.string.StringUtils;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.AionTransaction;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,7 +22,7 @@ import org.json.JSONObject;
 public class Blk {
 
     public static Object AionBlockToJson(
-            AionBlock block, BigInteger totalDifficulty, boolean fullTransaction) {
+            AionPoSBlock block, BigInteger totalDifficulty, boolean fullTransaction) {
         if (block == null) return null;
 
         JSONObject obj = new JSONObject();
@@ -41,8 +42,9 @@ public class Blk {
         // TODO: this is coinbase, miner, or minerAddress?
         obj.put("miner", StringUtils.toJsonHex(block.getCoinbase().toString()));
         obj.put("timestamp", StringUtils.toJsonHex(block.getTimestamp()));
-        obj.put("nonce", StringUtils.toJsonHex(block.getNonce()));
-        obj.put("solution", StringUtils.toJsonHex(block.getHeader().getSolution()));
+        // TODO: [unity] fix it later
+//        obj.put("nonce", StringUtils.toJsonHex(block.getNonce()));
+//        obj.put("solution", StringUtils.toJsonHex(block.getHeader().getSolution()));
         obj.put("gasUsed", StringUtils.toJsonHex(block.getHeader().getEnergyConsumed()));
         obj.put("gasLimit", StringUtils.toJsonHex(block.getHeader().getEnergyLimit()));
         obj.put("nrgUsed", StringUtils.toJsonHex(block.getHeader().getEnergyConsumed()));
@@ -90,7 +92,7 @@ public class Blk {
     }
 
     @SuppressWarnings("Duplicates")
-    public static JSONObject AionBlockOnlyToJson(AionBlock block, BigInteger totalDifficulty) {
+    public static JSONObject AionBlockOnlyToJson(AionPoSBlock block, BigInteger totalDifficulty) {
         if (block == null) return null;
 
         JSONObject obj = new JSONObject();
@@ -109,8 +111,9 @@ public class Blk {
 
         obj.put("miner", StringUtils.toJsonHex(block.getCoinbase().toString()));
         obj.put("timestamp", StringUtils.toJsonHex(block.getTimestamp()));
-        obj.put("nonce", StringUtils.toJsonHex(block.getNonce()));
-        obj.put("solution", StringUtils.toJsonHex(block.getHeader().getSolution()));
+        //TODO: [unity] fix it later
+//        obj.put("nonce", StringUtils.toJsonHex(block.getNonce()));
+//        obj.put("solution", StringUtils.toJsonHex(block.getHeader().getSolution()));
         obj.put("gasUsed", StringUtils.toJsonHex(block.getHeader().getEnergyConsumed()));
         obj.put("gasLimit", StringUtils.toJsonHex(block.getHeader().getEnergyLimit()));
         obj.put("nrgUsed", StringUtils.toJsonHex(block.getHeader().getEnergyConsumed()));

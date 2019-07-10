@@ -11,7 +11,7 @@ public interface IListenerBase<
         BLK extends Block<?, ?>,
         TX extends Transaction,
         TXR extends AbstractTxReceipt<?>,
-        BS extends AbstractBlockSummary<?, ?, ?, ?>> {
+        BS extends AbstractBlockSummary<?, ?, ?>> {
 
     enum PendingTransactionState {
         /**

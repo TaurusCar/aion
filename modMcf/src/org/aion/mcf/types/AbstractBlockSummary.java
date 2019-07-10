@@ -19,12 +19,13 @@ import org.slf4j.Logger;
 
 /** AbstractBlockSummary */
 public class AbstractBlockSummary<
-        BLK extends Block<?, ?>,
+//        BLKW extends Block<?, ?>,
+//        BLKS extends Block<?, ?>,
         TX extends Transaction,
         TXR extends AbstractTxReceipt<TX>,
         TXES extends TxExecSummary> {
 
-    protected BLK block;
+    protected Block block;
     protected Map<AionAddress, BigInteger> rewards;
     protected List<TXR> receipts;
     protected List<TXES> summaries;
@@ -32,7 +33,7 @@ public class AbstractBlockSummary<
 
     private Logger LOG = AionLoggerFactory.getLogger(LogEnum.CONS.toString());
 
-    public BLK getBlock() {
+    public Block getBlock() {
         return block;
     }
 

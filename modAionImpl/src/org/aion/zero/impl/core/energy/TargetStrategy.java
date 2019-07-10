@@ -1,6 +1,7 @@
 package org.aion.zero.impl.core.energy;
 
-import org.aion.zero.types.A0BlockHeader;
+
+import org.aion.mcf.types.AbstractBlockHeader;
 
 public class TargetStrategy extends AbstractEnergyStrategyLimit {
 
@@ -15,7 +16,7 @@ public class TargetStrategy extends AbstractEnergyStrategyLimit {
     }
 
     @Override
-    protected long getEnergyLimitInternal(A0BlockHeader header) {
+    protected long getEnergyLimitInternal(AbstractBlockHeader header) {
         return targetedEnergyLimitStrategy(
                 header.getEnergyLimit(), this.getEnergyDivisorLimit(), this.target);
     }

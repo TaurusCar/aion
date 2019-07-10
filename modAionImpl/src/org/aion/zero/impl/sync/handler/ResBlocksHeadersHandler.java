@@ -11,6 +11,7 @@ import org.aion.zero.impl.sync.statistics.RequestType;
 import org.aion.zero.impl.sync.SyncMgr;
 import org.aion.zero.impl.sync.msg.ResBlocksHeaders;
 import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 
 /** @author chris handler for block headers response from network */
@@ -40,7 +41,7 @@ public final class ResBlocksHeadersHandler extends Handler {
                     .getSyncStats()
                     .updateResponseTime(_displayId, System.nanoTime(), RequestType.HEADERS);
 
-            List<A0BlockHeader> headers = resHeaders.getHeaders();
+            List<StakedBlockHeader> headers = resHeaders.getHeaders();
             if (headers != null && headers.size() > 0) {
                 if (log.isDebugEnabled()) {
                     this.log.debug(

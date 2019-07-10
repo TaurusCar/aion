@@ -2,26 +2,23 @@ package org.aion.zero.impl.blockchain;
 
 import java.math.BigInteger;
 import java.util.List;
-import org.aion.mcf.blockchain.ChainInstanceHybrid;
+import org.aion.mcf.blockchain.PoSChainInstance;
 import org.aion.mcf.blockchain.PosChain;
 import org.aion.types.AionAddress;
 import org.aion.interfaces.db.Repository;
 import org.aion.zero.impl.AionHub;
 import org.aion.zero.impl.query.QueryInterface;
-import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionPoSBlock;
-import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxReceipt;
-import org.aion.zero.types.IAionBlock;
-import org.aion.zero.types.StakedBlockHeader;
+import org.aion.zero.types.PoSBlockInterface;
 
 /** Aion chain interface. */
-public interface IAionChain extends ChainInstanceHybrid, QueryInterface {
+public interface IAionChain extends PoSChainInstance, QueryInterface {
 
-    PosChain<AionBlock, A0BlockHeader> getBlockchain();
+    //IPowChain<AionPoSBlock, StakedBlockHeader> getBlockchain();
 
-    PosChain<AionPoSBlock, StakedBlockHeader> getPosChain();
+    PosChain<AionPoSBlock> getBlockchain();
 
 
     void close();
@@ -30,7 +27,7 @@ public interface IAionChain extends ChainInstanceHybrid, QueryInterface {
 
     void broadcastTransaction(AionTransaction transaction);
 
-    AionTxReceipt callConstant(AionTransaction tx, IAionBlock block);
+    AionTxReceipt callConstant(AionTransaction tx, PoSBlockInterface block);
 
     Repository<?, ?> getRepository();
 
@@ -46,5 +43,5 @@ public interface IAionChain extends ChainInstanceHybrid, QueryInterface {
 
     void exitOn(long number);
 
-    long estimateTxNrg(AionTransaction tx, IAionBlock block);
+    long estimateTxNrg(AionTransaction tx, PoSBlockInterface block);
 }

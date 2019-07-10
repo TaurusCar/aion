@@ -65,6 +65,7 @@ import org.aion.zero.impl.blockchain.IAionChain;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionBlockSummary;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.impl.types.AionTxInfo;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxReceipt;
@@ -460,7 +461,8 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                             .newBuilder()
                                             .setContractAddress(
                                                     ByteString.copyFrom(
-                                                            result.getContractAddress().toByteArray()))
+                                                            result.getContractAddress()
+                                                                    .toByteArray()))
                                             .setTxHash(ByteString.copyFrom(result.getTxHash()))
                                             .build();
 
@@ -872,7 +874,8 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                             .newBuilder()
                                             .setAddress(
                                                     ByteString.copyFrom(
-                                                            AddressUtils.wrapAddress(log.address).toByteArray()))
+                                                            AddressUtils.wrapAddress(log.address)
+                                                                    .toByteArray()))
                                             .setData(
                                                     ByteString.copyFrom(
                                                             ByteUtil.hexStringToBytes(log.data)))
@@ -983,7 +986,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                     try {
                         req = Message.req_getBlockByNumber.parseFrom(data);
                         long num = req.getBlockNumber();
-                        AionBlock blk = this.getBlock(num);
+                        AionPoSBlock blk = this.getBlock(num);
 
                         return createBlockMsg(blk);
                     } catch (Exception e) {
@@ -1046,7 +1049,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                     getApiVersion(), Retcode.r_fail_function_arguments_VALUE);
                         }
 
-                        AionBlock blk = this.getBlockByHash(hash);
+                        AionPoSBlock blk = this.getBlockByHash(hash);
                         return createBlockMsg(blk);
                     } catch (Exception e) {
                         LOG.error("ApiAion0.process.getBlockByHash exception: [{}]", e);
@@ -1497,7 +1500,9 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                 pKeyList.add(ByteString.copyFrom(pKey));
                             }
 
-                            addressList.add(ByteString.copyFrom(AddressUtils.wrapAddress(addr).toByteArray()));
+                            addressList.add(
+                                    ByteString.copyFrom(
+                                            AddressUtils.wrapAddress(addr).toByteArray()));
                         }
 
                         Message.rsp_accountCreate rsp =
@@ -1889,7 +1894,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                             blkNum = blkNum.subList(0, 1000);
                         }
 
-                        List<Map.Entry<AionBlock, BigInteger>> blks =
+                        List<Map.Entry<AionPoSBlock, BigInteger>> blks =
                                 getBlkAndDifficultyForBlkNumList(blkNum);
 
                         if (blks == null) {
@@ -1977,9 +1982,9 @@ public class ApiAion0 extends ApiAion implements IApiAion {
 
                         for (int i = 0; i < listLength; i++) {
                             long blkNum = blkStart + i;
-                            Map.Entry<AionBlock, BigInteger> entry =
+                            Map.Entry<AionPoSBlock, BigInteger> entry =
                                     getBlockWithTotalDifficulty(blkNum);
-                            AionBlock b = entry.getKey();
+                            AionPoSBlock b = entry.getKey();
                             BigInteger td = entry.getValue();
                             long blocktime;
                             if (blkNum != 0 && lastBlockTimestamp == null) {
@@ -2205,9 +2210,9 @@ public class ApiAion0 extends ApiAion implements IApiAion {
 
                         for (int i = 0; i < listLength; i++) {
                             long blkNum = blkStart + i;
-                            Map.Entry<AionBlock, BigInteger> entry =
+                            Map.Entry<AionPoSBlock, BigInteger> entry =
                                     getBlockWithTotalDifficulty(blkNum);
-                            AionBlock b = entry.getKey();
+                            AionPoSBlock b = entry.getKey();
                             BigInteger td = entry.getValue();
                             long blocktime = 0;
                             if (b.getNumber() > 0 && lastBlockTimestamp == null) {
@@ -2379,7 +2384,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                         .boxed()
                                         .collect(Collectors.toList());
 
-                        List<Map.Entry<AionBlock, BigInteger>> blks =
+                        List<Map.Entry<AionPoSBlock, BigInteger>> blks =
                                 getBlkAndDifficultyForBlkNumList(blkNum);
 
                         if (blks == null) {
@@ -2432,7 +2437,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                         .boxed()
                                         .collect(Collectors.toList());
 
-                        List<Map.Entry<AionBlock, BigInteger>> blks =
+                        List<Map.Entry<AionPoSBlock, BigInteger>> blks =
                                 getBlkAndDifficultyForBlkNumList(blkNum);
 
                         if (blks == null) {
@@ -2481,7 +2486,8 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                                 a -> {
                                                     BigInteger b =
                                                             this.getBalance(
-                                                                    new AionAddress(a.toByteArray()));
+                                                                    new AionAddress(
+                                                                            a.toByteArray()));
 
                                                     Message.t_AccountDetail.Builder builder =
                                                             Message.t_AccountDetail.newBuilder();
@@ -2548,7 +2554,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
         return txWait.take();
     }
 
-    private byte[] createBlockMsg(AionBlock blk) {
+    private byte[] createBlockMsg(AionPoSBlock blk) {
         if (blk == null) {
             return ApiUtil.toReturnHeader(getApiVersion(), Retcode.r_fail_function_arguments_VALUE);
         } else {
@@ -2591,7 +2597,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
     }
 
     private Message.rsp_getBlock getRsp_getBlock(
-            AionBlock blk, List<ByteString> al, BigInteger td) {
+            AionPoSBlock blk, List<ByteString> al, BigInteger td) {
         return Message.rsp_getBlock
                 .newBuilder()
                 .setParentHash(ByteString.copyFrom(blk.getParentHash()))
@@ -2604,24 +2610,25 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                 .setNrgLimit(blk.getNrgLimit())
                 .setHash(ByteString.copyFrom(blk.getHash()))
                 .setLogsBloom(ByteString.copyFrom(blk.getLogBloom()))
-                .setNonce(ByteString.copyFrom(blk.getNonce()))
                 .setReceiptTrieRoot(ByteString.copyFrom(blk.getReceiptsRoot()))
                 .setTimestamp(blk.getTimestamp())
                 .setBlockNumber(blk.getNumber())
-                .setSolution(ByteString.copyFrom(blk.getHeader().getSolution()))
+                // TODO: [unity] fix it later
+//                .setNonce(ByteString.copyFrom(blk.getNonce()))
+//                .setSolution(ByteString.copyFrom(blk.getHeader().getSolution()))
                 .addAllTxHash(al)
                 .setSize(blk.size())
                 .setTotalDifficulty(ByteString.copyFrom(td.toByteArray()))
                 .build();
     }
 
-    private List<Message.t_Block> getRsp_getBlocks(List<Map.Entry<AionBlock, BigInteger>> blks) {
+    private List<Message.t_Block> getRsp_getBlocks(List<Map.Entry<AionPoSBlock, BigInteger>> blks) {
 
         return blks.parallelStream()
                 .filter(Objects::nonNull)
                 .map(
                         blk -> {
-                            AionBlock b = blk.getKey();
+                            AionPoSBlock b = blk.getKey();
 
                             return Message.t_Block
                                     .newBuilder()
@@ -2630,8 +2637,6 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                     .setExtraData(ByteString.copyFrom(b.getExtraData()))
                                     .setHash(ByteString.copyFrom(b.getHash()))
                                     .setLogsBloom(ByteString.copyFrom(b.getLogBloom()))
-                                    .setMinerAddress(ByteString.copyFrom(b.getCoinbase().toByteArray()))
-                                    .setNonce(ByteString.copyFrom(b.getNonce()))
                                     .setNrgConsumed(b.getNrgConsumed())
                                     .setNrgLimit(b.getNrgLimit())
                                     .setParentHash(ByteString.copyFrom(b.getParentHash()))
@@ -2640,7 +2645,13 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                     .setReceiptTrieRoot(ByteString.copyFrom(b.getReceiptsRoot()))
                                     .setStateRoot(ByteString.copyFrom(b.getStateRoot()))
                                     .setSize(b.size())
-                                    .setSolution(ByteString.copyFrom(b.getHeader().getSolution()))
+                                    .setMinerAddress(
+                                            ByteString.copyFrom(b.getCoinbase().toByteArray()))
+                                    // TODO: [unity] fix it later
+                                    //
+                                    // .setNonce(ByteString.copyFrom(b.getNonce()))
+                                    //
+                                    // .setSolution(ByteString.copyFrom(b.getHeader().getSolution()))
                                     .setTotalDifficulty(
                                             ByteString.copyFrom(blk.getValue().toByteArray()))
                                     .build();
@@ -2649,7 +2660,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
     }
 
     private Message.t_BlockDetail.Builder getBlockDetailsObj(
-            AionBlock b, BigInteger td, long blocktime) {
+            AionPoSBlock b, BigInteger td, long blocktime) {
 
         return Message.t_BlockDetail
                 .newBuilder()
@@ -2659,7 +2670,6 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                 .setHash(ByteString.copyFrom(b.getHash()))
                 .setLogsBloom(ByteString.copyFrom(b.getLogBloom()))
                 .setMinerAddress(ByteString.copyFrom(b.getCoinbase().toByteArray()))
-                .setNonce(ByteString.copyFrom(b.getNonce()))
                 .setNrgConsumed(b.getNrgConsumed())
                 .setNrgLimit(b.getNrgLimit())
                 .setParentHash(ByteString.copyFrom(b.getParentHash()))
@@ -2668,7 +2678,9 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                 .setReceiptTrieRoot(ByteString.copyFrom(b.getReceiptsRoot()))
                 .setStateRoot(ByteString.copyFrom(b.getStateRoot()))
                 .setSize(b.size())
-                .setSolution(ByteString.copyFrom(b.getHeader().getSolution()))
+                // TODO: fix it later
+                //                .setNonce(ByteString.copyFrom(b.getNonce()))
+                //                .setSolution(ByteString.copyFrom(b.getHeader().getSolution()))
                 .setTotalDifficulty(ByteString.copyFrom(td.toByteArray()))
                 .setBlockTime(blocktime);
     }
@@ -2731,7 +2743,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
         return tdBuilder.build();
     }
 
-    private String generateBlockSqlStatement(AionBlock b, BigInteger td, long blocktime) {
+    private String generateBlockSqlStatement(AionPoSBlock b, BigInteger td, long blocktime) {
         /*
         create table block_cache(
             block_number bigint(64) primary key,
@@ -2784,15 +2796,16 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                 + "'"
                 + ByteUtil.toHexString(b.getExtraData())
                 + "',"
-                + "'"
-                + ByteUtil.toHexString(b.getNonce())
-                + "',"
+
+                //                + "'"
+                //                + ByteUtil.toHexString(b.getNonce())
+                //                + "',"
                 + "'"
                 + ByteUtil.toHexString(b.getLogBloom())
                 + "',"
-                + "'"
-                + ByteUtil.toHexString(b.getHeader().getSolution())
-                + "',"
+                //                + "'"
+                //                + ByteUtil.toHexString(b.getHeader().getSolution())
+                //                + "',"
                 + "'"
                 + ByteUtil.toHexString(b.getDifficulty())
                 + "',"
@@ -2813,7 +2826,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
     }
 
     private String generateTransactionSqlStatement(
-            AionBlock b,
+            AionPoSBlock b,
             AionTransaction t,
             List<IExecutionLog> _logs,
             int txIndex,
@@ -2899,13 +2912,13 @@ public class ApiAion0 extends ApiAion implements IApiAion {
     }
 
     private List<Message.t_BlockDetail> getRsp_getBlockDetails(
-            List<Map.Entry<AionBlock, BigInteger>> blks) {
+            List<Map.Entry<AionPoSBlock, BigInteger>> blks) {
 
         return blks.parallelStream()
                 .filter(Objects::nonNull)
                 .map(
                         blk -> {
-                            AionBlock b = blk.getKey();
+                            AionPoSBlock b = blk.getKey();
                             Message.t_BlockDetail.Builder builder =
                                     Message.t_BlockDetail
                                             .newBuilder()
@@ -2915,8 +2928,8 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                             .setHash(ByteString.copyFrom(b.getHash()))
                                             .setLogsBloom(ByteString.copyFrom(b.getLogBloom()))
                                             .setMinerAddress(
-                                                    ByteString.copyFrom(b.getCoinbase().toByteArray()))
-                                            .setNonce(ByteString.copyFrom(b.getNonce()))
+                                                    ByteString.copyFrom(
+                                                            b.getCoinbase().toByteArray()))
                                             .setNrgConsumed(b.getNrgConsumed())
                                             .setNrgLimit(b.getNrgLimit())
                                             .setParentHash(ByteString.copyFrom(b.getParentHash()))
@@ -2926,9 +2939,15 @@ public class ApiAion0 extends ApiAion implements IApiAion {
                                                     ByteString.copyFrom(b.getReceiptsRoot()))
                                             .setStateRoot(ByteString.copyFrom(b.getStateRoot()))
                                             .setSize(b.size())
-                                            .setSolution(
-                                                    ByteString.copyFrom(
-                                                            b.getHeader().getSolution()))
+                                            // TODO: [unity] Fix it later
+                                            //
+                                            // .setNonce(ByteString.copyFrom(b.getNonce()))
+                                            //
+                                            // .setSolution(
+                                            //
+                                            // ByteString.copyFrom(
+                                            //
+                                            //      b.getHeader().getSolution()))
                                             .setTotalDifficulty(
                                                     ByteString.copyFrom(
                                                             blk.getValue().toByteArray()));
@@ -3053,7 +3072,7 @@ public class ApiAion0 extends ApiAion implements IApiAion {
     // all or nothing. if any block from list is not found, unchecked exception gets thrown by
     // Map.entry()
     // causes this function to return in Exception
-    private List<Map.Entry<AionBlock, BigInteger>> getBlkAndDifficultyForBlkNumList(
+    private List<Map.Entry<AionPoSBlock, BigInteger>> getBlkAndDifficultyForBlkNumList(
             List<Long> blkNum) {
         return blkNum.parallelStream()
                 .map(this::getBlockWithTotalDifficulty)

@@ -191,9 +191,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
                     rlpNumber,
                     rlpTimestamp,
                     rlpExtraData,
-                    rlpSeed,
                     rlpEnergyConsumed,
-                    rlpEnergyLimit);
+                    rlpEnergyLimit,
+                    rlpSeed);
         }
     }
 
@@ -268,6 +268,7 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
          * Builder parameters, not related to header data structure
          */
         private static int SIG_LENGTH = 64;
+        private static int SEED_LENGTH = 96;
         private static byte[] EMPTY_SIGNATURE = new byte[64];
 
         public Builder fromUnsafeSource() {
@@ -340,11 +341,11 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
         }
 
         public Builder withEnergyLimit(byte[] _energyLimit) throws HeaderStructureException {
-            return (Builder) super.withEnergyConsumed(_energyLimit);
+            return (Builder) super.withEnergyLimit(_energyLimit);
         }
 
         public Builder withEnergyLimit(long _energyLimit) throws HeaderStructureException {
-            return (Builder) super.withEnergyConsumed(_energyLimit);
+            return (Builder) super.withEnergyLimit(_energyLimit);
         }
 
         public Builder withSeed(byte[] _seed) throws HeaderStructureException {
@@ -352,7 +353,7 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
                 if (_seed == null)
                     throw new HeaderStructureException("seed", RLP_BH_SEED, "cannot be null");
 
-                if (_seed.length != SIG_LENGTH) {
+                if (_seed.length != SEED_LENGTH) {
                     throw new HeaderStructureException("seed", RLP_BH_SEED, "invalid seed length");
                 }
             }

@@ -13,7 +13,7 @@ import org.aion.zero.impl.db.AionRepositoryImpl;
 /** {@link AionHub} functionality where a full instantiation of the class is not desirable. */
 public class AionHubUtils {
 
-    public static void buildGenesis(AionGenesis genesis, AionRepositoryImpl repository) {
+    public static void buildGenesis(AionGenesisPoS genesis, AionRepositoryImpl repository) {
         // initialization section for network balance contract
         RepositoryCache track = repository.startTracking();
 

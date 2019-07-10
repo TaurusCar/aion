@@ -7,7 +7,7 @@ import org.aion.p2p.Ver;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.zero.impl.sync.Act;
 import org.aion.zero.impl.sync.msg.BroadcastNewBlock;
-import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.slf4j.Logger;
 
 /** @author jay handler for new block broadcasted from network */
@@ -43,7 +43,7 @@ public final class BroadcastNewBlockHandler extends Handler {
             return;
         }
 
-        AionBlock block = new AionBlock(rawdata);
+        AionPoSBlock block = new AionPoSBlock(rawdata);
 
         BlockPropagationHandler.PropStatus result =
                 this.propHandler.processIncomingBlock(_nodeIdHashcode, _displayId, block);

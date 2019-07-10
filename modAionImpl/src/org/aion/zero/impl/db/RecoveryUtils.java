@@ -17,12 +17,14 @@ import org.aion.util.conversions.Hex;
 import org.aion.util.types.AddressUtils;
 import org.aion.zero.impl.AionBlockchainImpl;
 import org.aion.zero.impl.AionGenesis;
+import org.aion.zero.impl.AionGenesisPoS;
 import org.aion.zero.impl.AionHubUtils;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.core.IAionBlockchain;
 import org.aion.zero.impl.sync.DatabaseType;
 import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionBlockSummary;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -187,7 +189,7 @@ public class RecoveryUtils {
 
         int paramIndex = 1;
         // print state for parent block
-        AionBlock parent = store.getChainBlockByNumber(blockNumber - 1);
+        AionPoSBlock parent = store.getChainBlockByNumber(blockNumber - 1);
         if (parent == null) {
             System.out.println("Illegal arguments. Parent block is null.");
         } else {
@@ -353,7 +355,7 @@ public class RecoveryUtils {
             targetBlock = 0;
         }
 
-        AionBlock block;
+        AionPoSBlock block;
         byte[] stateRoot;
 
         while (targetBlock <= topBlock) {
@@ -412,7 +414,7 @@ public class RecoveryUtils {
 
         AionBlockStore store = repository.getBlockStore();
 
-        AionBlock block;
+        AionPoSBlock block;
 
         if (blockNumber == -1L) {
             block = store.getBestBlock();
@@ -474,11 +476,11 @@ public class RecoveryUtils {
 
         // recover genesis
         System.out.println("Rebuilding genesis block ...");
-        AionGenesis genesis = cfg.getGenesis();
+        AionGenesisPoS genesis = cfg.getGenesisPoS();
         AionHubUtils.buildGenesis(genesis, repo);
 
         // recover all blocks
-        AionBlock block = store.getBestBlock();
+        AionPoSBlock block = store.getBestBlock();
         System.out.println(
                 "Rebuilding the main chain "
                         + block.getNumber()
@@ -541,8 +543,8 @@ public class RecoveryUtils {
         AionBlockStore store = repo.getBlockStore();
 
         // determine the parameters of the rebuild
-        AionBlock block = store.getBestBlock();
-        AionBlock startBlock;
+        AionPoSBlock block = store.getBestBlock();
+        AionPoSBlock startBlock;
         long currentBlock;
         if (block != null && startHeight <= block.getNumber()) {
             System.out.println(
@@ -560,7 +562,7 @@ public class RecoveryUtils {
                 repo.dropDatabasesExcept(keep);
 
                 // recover genesis
-                AionGenesis genesis = cfg.getGenesis();
+                AionGenesisPoS genesis = cfg.getGenesisPoS();
                 AionHubUtils.buildGenesis(genesis, repo);
                 System.out.println("\nFinished rebuilding genesis block.");
                 startBlock = genesis;

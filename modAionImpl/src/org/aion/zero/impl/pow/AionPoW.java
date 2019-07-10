@@ -29,6 +29,7 @@ import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.core.IAionBlockchain;
 import org.aion.zero.impl.sync.SyncMgr;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.AionTransaction;
 import org.slf4j.Logger;
 
@@ -195,9 +196,10 @@ public class AionPoW {
         if (!shutDown.get()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Best block num [{}]", blockchain.getBestBlock().getNumber());
-                LOG.debug(
-                        "Best block nonce [{}]",
-                        Hex.toHexString(blockchain.getBestBlock().getNonce()));
+                // TODO: [Unity] fix it when implementing the hybrid chain
+                //                LOG.debug(
+                //                        "Best block nonce [{}]",
+                //                        Hex.toHexString(blockchain.getBestBlock().getNonce()));
                 LOG.debug(
                         "Best block hash [{}]",
                         Hex.toHexString(blockchain.getBestBlock().getHash()));
@@ -262,12 +264,13 @@ public class AionPoW {
                 LOG.debug("Creating a new block template");
             }
 
-            AionBlock bestBlock =
+            // TODO: [unity] fix it when implemnting the hybrid chain
+            AionPoSBlock bestBlock =
                     blockchain.getBlockByNumber(blockchain.getBestBlock().getNumber());
 
             List<AionTransaction> txs = pendingState.getPendingTransactions();
 
-            AionBlock newBlock = blockchain.createNewBlock(bestBlock, txs, false);
+            AionPoSBlock newBlock = blockchain.createNewBlock(bestBlock, txs, false);
 
             EventConsensus ev = new EventConsensus(EventConsensus.CALLBACK.ON_BLOCK_TEMPLATE);
             ev.setFuncArgs(Collections.singletonList(newBlock));

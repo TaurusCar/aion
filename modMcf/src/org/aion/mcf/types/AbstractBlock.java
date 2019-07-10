@@ -41,7 +41,7 @@ public abstract class AbstractBlock<BH extends BlockHeader, TX extends AbstractT
         return RLP.encodeList(elements);
     }
 
-    public List<byte[]> getBodyElements() {
+    protected List<byte[]> getBodyElements() {
         parseRLP();
         byte[] transactions = getTransactionsEncoded();
         List<byte[]> body = new ArrayList<>();
@@ -49,7 +49,7 @@ public abstract class AbstractBlock<BH extends BlockHeader, TX extends AbstractT
         return body;
     }
 
-    public byte[] getTransactionsEncoded() {
+    private byte[] getTransactionsEncoded() {
 
         byte[][] transactionsEncoded = new byte[transactionsList.size()][];
         int i = 0;

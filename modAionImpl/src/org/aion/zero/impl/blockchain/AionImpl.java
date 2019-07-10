@@ -4,10 +4,11 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import org.aion.crypto.ECKey;
+import org.aion.interfaces.block.Block;
 import org.aion.mcf.blockchain.PosChain;
+import org.aion.stake.StakeRunner;
 import org.aion.types.AionAddress;
 import org.aion.crypto.ECKeyFac;
-import org.aion.equihash.EquihashMiner;
 import org.aion.interfaces.db.Repository;
 import org.aion.interfaces.db.RepositoryCache;
 import org.aion.log.AionLoggerFactory;
@@ -15,7 +16,6 @@ import org.aion.log.LogEnum;
 import org.aion.mcf.blockchain.IPendingStateInternal;
 import org.aion.mcf.core.AccountState;
 import org.aion.mcf.core.ImportResult;
-import org.aion.mcf.mine.IMineRunner;
 import org.aion.vm.api.types.ByteArrayWrapper;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.types.AddressUtils;
@@ -24,13 +24,10 @@ import org.aion.vm.exception.VMException;
 import org.aion.zero.impl.AionHub;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.tx.TxCollector;
-import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionPoSBlock;
-import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxReceipt;
-import org.aion.zero.types.IAionBlock;
-import org.aion.zero.types.StakedBlockHeader;
+import org.aion.zero.types.PoSBlockInterface;
 import org.slf4j.Logger;
 
 public class AionImpl implements IAionChain {
@@ -65,31 +62,31 @@ public class AionImpl implements IAionChain {
         return Holder.INSTANCE;
     }
 
+//    @Override
+//    public PosChain<AionBlock, A0BlockHeader> getBlockchain() {
+//        return aionHub.getBlockchain();
+//    }
+
     @Override
-    public PosChain<AionBlock, A0BlockHeader> getBlockchain() {
+    public PosChain<AionPoSBlock> getBlockchain() {
         return aionHub.getBlockchain();
     }
 
-    @Override
-    public PosChain<AionPoSBlock, StakedBlockHeader> getPosChain() {
-        return aionHub.getBlockchain();
-    }
-
-    public synchronized ImportResult addNewMinedBlock(AionBlock block) {
-        ImportResult importResult = this.aionHub.getBlockchain().tryToConnect(block);
+    public synchronized ImportResult addNewMinedBlock(Block block) {
+        ImportResult importResult = this.aionHub.getBlockchain().tryToConnect((AionPoSBlock) block);
 
         if (importResult == ImportResult.IMPORTED_BEST) {
-            this.aionHub.getPropHandler().propagateNewBlock(block);
+            this.aionHub.getPropHandler().propagateNewBlock((AionPoSBlock) block);
         }
         return importResult;
     }
 
     @Override
-    public IMineRunner getBlockMiner() {
+    public StakeRunner getBlockMiner() {
 
         try {
             AddressUtils.wrapAddress(this.cfg.getConsensus().getMinerAddress());
-            return EquihashMiner.inst();
+            return StakeRunner.inst();
         } catch (Exception e) {
             LOG_GEN.info("Miner address is not set");
             return null;
@@ -127,7 +124,7 @@ public class AionImpl implements IAionChain {
         collector.submitTx(transaction);
     }
 
-    public long estimateTxNrg(AionTransaction tx, IAionBlock block) {
+    public long estimateTxNrg(AionTransaction tx, PoSBlockInterface block) {
 
         if (tx.getSignature() == null) {
             tx.sign(keyForCallandEstimate);
@@ -162,7 +159,7 @@ public class AionImpl implements IAionChain {
     }
 
     @Override
-    public AionTxReceipt callConstant(AionTransaction tx, IAionBlock block) {
+    public AionTxReceipt callConstant(AionTransaction tx, PoSBlockInterface block) {
 
         if (tx.getSignature() == null) {
             tx.sign(keyForCallandEstimate);

@@ -3,6 +3,7 @@ package org.aion.zero.impl.sync.msg;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.aion.interfaces.block.Block;
 import org.aion.p2p.Ctrl;
 import org.aion.p2p.Msg;
 import org.aion.p2p.Ver;
@@ -19,7 +20,7 @@ import org.aion.zero.impl.types.AionBlock;
  */
 public final class ResponseBlocks extends Msg {
 
-    private final List<AionBlock> blocks;
+    private final List<Block> blocks;
 
     /**
      * Constructor for block range responses.
@@ -30,7 +31,7 @@ public final class ResponseBlocks extends Msg {
      *     encoded and transmitted over the network and therefore there is the expectation that they
      *     will not be utilized further.
      */
-    public ResponseBlocks(final List<AionBlock> blocks) {
+    public ResponseBlocks(final List<Block> blocks) {
         super(Ver.V1, Ctrl.SYNC, Act.RESPONSE_BLOCKS);
 
         // ensure input is not null
@@ -57,8 +58,8 @@ public final class ResponseBlocks extends Msg {
                 return null;
             }
 
-            List<AionBlock> blocks = new ArrayList<>();
-            AionBlock current;
+            List<Block> blocks = new ArrayList<>();
+            Block current;
             for (RLPElement encoded : list) {
                 try { // preventative try-catch: it's unlikely that exceptions can pass up to here
                     current = AionBlock.fromRLP(encoded.getRLPData(), true);
@@ -80,7 +81,7 @@ public final class ResponseBlocks extends Msg {
         byte[][] toEncode = new byte[this.blocks.size()][];
 
         int i = 0;
-        for (AionBlock block : blocks) {
+        for (Block block : blocks) {
             toEncode[i] = block.getEncoded();
             i++;
         }
@@ -93,7 +94,7 @@ public final class ResponseBlocks extends Msg {
      *
      * @return the list of blocks representing the response to a requested block range
      */
-    public List<AionBlock> getBlocks() {
+    public List<Block> getBlocks() {
         return blocks;
     }
 

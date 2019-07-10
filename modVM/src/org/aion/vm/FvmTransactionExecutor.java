@@ -25,6 +25,7 @@ import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxExecSummary;
 import org.aion.zero.types.AionTxReceipt;
 import org.aion.zero.types.IAionBlock;
+import org.aion.zero.types.PoSBlockInterface;
 import org.slf4j.Logger;
 
 /**
@@ -56,7 +57,7 @@ public final class FvmTransactionExecutor {
      */
     public static List<AionTxExecSummary> executeTransactions(
         RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository,
-        IAionBlock block,
+        PoSBlockInterface block,
         AionTransaction[] transactions,
         PostExecutionWork postExecutionWork,
         Logger logger,
@@ -176,7 +177,7 @@ public final class FvmTransactionExecutor {
         }
     }
 
-    private static void payMiner(RepositoryCache repository, IAionBlock block, TxExecSummary summary) {
+    private static void payMiner(RepositoryCache repository, PoSBlockInterface block, TxExecSummary summary) {
         repository.addBalance(block.getCoinbase(), summary.getFee());
     }
 
@@ -205,7 +206,7 @@ public final class FvmTransactionExecutor {
     }
 
     // TODO -- this has been marked as a temporary solution for a long time, someone should investigate
-    private static DataWord getDifficultyAsDataWord(IAionBlock block) {
+    private static DataWord getDifficultyAsDataWord(PoSBlockInterface block) {
         byte[] diff = block.getDifficulty();
         if (diff.length > 16) {
             diff = Arrays.copyOfRange(diff, diff.length - 16, diff.length);
@@ -213,7 +214,7 @@ public final class FvmTransactionExecutor {
         return new DataWordImpl(diff);
     }
 
-    private static KernelInterface newKernelInterface(RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, IAionBlock block, boolean allowNonceIncrement, boolean isLocalCall, boolean fork040enable) {
+    private static KernelInterface newKernelInterface(RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, PoSBlockInterface block, boolean allowNonceIncrement, boolean isLocalCall, boolean fork040enable) {
         return new KernelInterfaceForFastVM(
             repository,
             allowNonceIncrement,

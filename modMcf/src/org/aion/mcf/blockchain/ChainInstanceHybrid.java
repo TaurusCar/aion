@@ -6,7 +6,7 @@ import org.aion.mcf.stake.IStakeRunner;
 /** Chain instance pow interface. */
 public interface ChainInstanceHybrid extends IChainInstanceBase {
 
-    PosChain<?, ?> getBlockchain();
+    PosChain<?> getBlockchain();
 
     IMineRunner getPowMiner();
 

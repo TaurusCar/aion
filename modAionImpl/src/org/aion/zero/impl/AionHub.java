@@ -18,7 +18,6 @@ import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.log.LogUtil;
 import org.aion.mcf.blockchain.IPendingStateInternal;
-import org.aion.mcf.blockchain.PosChain;
 import org.aion.mcf.config.CfgNetP2p;
 import org.aion.mcf.db.IBlockStorePow;
 import org.aion.p2p.Handler;
@@ -28,10 +27,10 @@ import org.aion.util.bytes.ByteUtil;
 import org.aion.zero.impl.blockchain.AionPendingStateImpl;
 import org.aion.zero.impl.blockchain.ChainConfiguration;
 import org.aion.zero.impl.config.CfgAion;
-import org.aion.zero.impl.core.AionChainInterface;
 import org.aion.zero.impl.core.IAionBlockchain;
 import org.aion.zero.impl.db.AionRepositoryImpl;
 import org.aion.zero.impl.db.RecoveryUtils;
+import org.aion.zero.impl.pos.AionPoS;
 import org.aion.zero.impl.pow.AionPoW;
 import org.aion.zero.impl.sync.SyncMgr;
 import org.aion.zero.impl.sync.handler.BlockPropagationHandler;
@@ -43,9 +42,9 @@ import org.aion.zero.impl.sync.handler.ReqStatusHandler;
 import org.aion.zero.impl.sync.handler.ResBlocksBodiesHandler;
 import org.aion.zero.impl.sync.handler.ResBlocksHeadersHandler;
 import org.aion.zero.impl.sync.handler.ResStatusHandler;
-import org.aion.zero.impl.types.AionBlock;
-import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.AionTransaction;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 
 public class AionHub {
@@ -62,9 +61,9 @@ public class AionHub {
 
     private BlockPropagationHandler propHandler;
 
-    private IPendingStateInternal<AionBlock, AionTransaction> mempool;
+    private IPendingStateInternal<AionPoSBlock, AionTransaction> mempool;
 
-    private AionChainInterface blockchain;
+    private IAionBlockchain blockchain;
 
     // TODO: Refactor to interface later
     private AionRepositoryImpl repository;
@@ -72,6 +71,8 @@ public class AionHub {
     private IEventMgr eventMgr;
 
     private AionPoW pow;
+
+    private AionPoS pos;
 
     private AtomicBoolean start = new AtomicBoolean(true);
 
@@ -85,7 +86,7 @@ public class AionHub {
     /**
      * A "cached" block that represents our local best block when the application is first booted.
      */
-    private volatile AionBlock startingBlock;
+    private volatile AionPoSBlock startingBlock;
 
     /**
      * Initialize as per the <a href=
@@ -190,7 +191,7 @@ public class AionHub {
                         this.blockchain,
                         syncMgr.getSyncStats(),
                         p2pMgr,
-                        chainConfig.createBlockHeaderValidator(),
+                        chainConfig.createPosBlockHeaderValidator(),
                         cfg.getNet().getP2p().inSyncOnlyMode(),
                         apiVersion,
                         mempool);
@@ -203,8 +204,11 @@ public class AionHub {
 
         ((AionPendingStateImpl) this.mempool).setP2pMgr(this.p2pMgr);
 
-        this.pow = new AionPoW();
-        this.pow.init(_blockchain, mempool, eventMgr);
+//        this.pow = new AionPoW();
+//        this.pow.init(_blockchain, mempool, eventMgr);
+
+        pos = new AionPoS();
+        pos.init(_blockchain, mempool, eventMgr);
     }
 
     static AionHub createForTesting(
@@ -272,15 +276,15 @@ public class AionHub {
         return repository;
     }
 
-    public PosChain getBlockchain() {
+    public IAionBlockchain getBlockchain() {
         return blockchain;
     }
 
-    public IBlockStorePow<AionBlock, A0BlockHeader> getBlockStore() {
+    public IBlockStorePow<AionPoSBlock, StakedBlockHeader> getBlockStore() {
         return this.repository.getBlockStore();
     }
 
-    public IPendingStateInternal<AionBlock, AionTransaction> getPendingState() {
+    public IPendingStateInternal<AionPoSBlock, AionTransaction> getPendingState() {
         return mempool;
     }
 
@@ -303,7 +307,7 @@ public class AionHub {
         }
 
         // Note: if block DB corruption, the bestBlock may not match with the indexDB.
-        AionBlock bestBlock = this.repository.getBlockStore().getBestBlock();
+        AionPoSBlock bestBlock = this.repository.getBlockStore().getBestBlock();
 
         boolean recovered = true;
         boolean bestBlockShifted = true;
@@ -327,7 +331,7 @@ public class AionHub {
             byte[] bestBlockRoot = bestBlock.getStateRoot();
 
             // ensure that the genesis state exists before attempting recovery
-            AionGenesis genesis = cfg.getGenesis();
+            AionGenesisPoS genesis = cfg.getGenesisPoS();
             if (!this.repository.isValidRoot(genesis.getStateRoot())) {
                 genLOG.info(
                         "Corrupt world state for genesis block hash: "
@@ -421,7 +425,7 @@ public class AionHub {
                 genLOG.info("DB could not be recovered - adding Genesis");
             }
 
-            AionGenesis genesis = cfg.getGenesis();
+            AionGenesisPoS genesis = cfg.getGenesisPoS();
 
             AionHubUtils.buildGenesis(genesis, repository);
 
@@ -453,7 +457,7 @@ public class AionHub {
                     blockchain.getTotalDifficulty());
         }
 
-        byte[] genesisHash = cfg.getGenesis().getHash();
+        byte[] genesisHash = cfg.getGenesisPoS().getHash();
         byte[] databaseGenHash =
                 blockchain.getBlockByNumber(0) == null
                         ? null
@@ -514,7 +518,9 @@ public class AionHub {
         }
 
         genLOG.info("shutting down consensus...");
-        pow.shutdown();
+        pos.shutdown();
+        //TODO: [Unity] fix it later
+        //pow.shutdown();
         genLOG.info("shutdown consensus... Done!");
 
         if (repository != null) {
@@ -538,7 +544,7 @@ public class AionHub {
         return Version.REPO_VERSION;
     }
 
-    public AionBlock getStartingBlock() {
+    public AionPoSBlock getStartingBlock() {
         return this.startingBlock;
     }
 

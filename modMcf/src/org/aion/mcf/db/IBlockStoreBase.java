@@ -1,5 +1,6 @@
 package org.aion.mcf.db;
 
+import java.math.BigInteger;
 import java.util.List;
 import org.aion.interfaces.block.Block;
 import org.aion.mcf.types.AbstractBlockHeader;
@@ -45,4 +46,6 @@ public interface IBlockStoreBase<BLK extends Block<?, ?>, BH extends AbstractBlo
     void close();
 
     void rollback(long blockNumber);
+
+    BigInteger getTotalDifficultyForHash(byte[] hash);
 }

@@ -16,7 +16,7 @@ import org.aion.types.AionAddress;
 import org.aion.vm.exception.VMException;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.AionTxExecSummary;
-import org.aion.zero.types.IAionBlock;
+import org.aion.zero.types.PoSBlockInterface;
 import org.slf4j.Logger;
 
 /**
@@ -49,7 +49,7 @@ public final class BulkExecutor {
      * @param logger The logger.
      * @param postExecutionWork The post-execution work to apply after each transaction is run.
      */
-    public static List<AionTxExecSummary> executeAllTransactionsInBlock(IAionBlock block, RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, boolean isLocalCall, boolean incrementSenderNonce, boolean fork040Enable, boolean checkBlockEnergyLimit, Logger logger, PostExecutionWork postExecutionWork) throws VMException {
+    public static List<AionTxExecSummary> executeAllTransactionsInBlock(PoSBlockInterface block, RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, boolean isLocalCall, boolean incrementSenderNonce, boolean fork040Enable, boolean checkBlockEnergyLimit, Logger logger, PostExecutionWork postExecutionWork) throws VMException {
         if (block == null) {
             throw new NullPointerException("Cannot execute given a null block!");
         }
@@ -81,7 +81,7 @@ public final class BulkExecutor {
      * @param checkBlockEnergyLimit Whether or not to check the block energy limit overflow per transaction.
      * @param logger The logger.
      */
-    public static AionTxExecSummary executeTransactionWithNoPostExecutionWork(IAionBlock block, AionTransaction transaction, RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, boolean isLocalCall, boolean incrementSenderNonce, boolean fork040Enable, boolean checkBlockEnergyLimit, Logger logger) throws VMException {
+    public static AionTxExecSummary executeTransactionWithNoPostExecutionWork(PoSBlockInterface block, AionTransaction transaction, RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, boolean isLocalCall, boolean incrementSenderNonce, boolean fork040Enable, boolean checkBlockEnergyLimit, Logger logger) throws VMException {
         if (block == null) {
             throw new NullPointerException("Cannot execute given a null block!");
         }
@@ -95,7 +95,7 @@ public final class BulkExecutor {
         return executeInternal(block, Collections.singletonList(transaction), repository, null, logger, checkBlockEnergyLimit, incrementSenderNonce, isLocalCall, fork040Enable).get(0);
     }
 
-    private static List<AionTxExecSummary> executeInternal(IAionBlock block, List<AionTransaction> transactions, RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, PostExecutionWork postExecutionWork, Logger logger, boolean checkBlockEnergyLimit, boolean incrementSenderNonce, boolean isLocalCall, boolean fork040enabled) throws VMException {
+    private static List<AionTxExecSummary> executeInternal(PoSBlockInterface block, List<AionTransaction> transactions, RepositoryCache<AccountState, IBlockStoreBase<?, ?>> repository, PostExecutionWork postExecutionWork, Logger logger, boolean checkBlockEnergyLimit, boolean incrementSenderNonce, boolean isLocalCall, boolean fork040enabled) throws VMException {
         List<AionTxExecSummary> allSummaries = new ArrayList<>();
 
         long blockRemainingEnergy = block.getNrgLimit();

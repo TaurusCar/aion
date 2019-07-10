@@ -16,8 +16,8 @@ import org.aion.zero.impl.sync.SyncStats;
 import org.aion.zero.impl.sync.msg.BroadcastNewBlock;
 import org.aion.zero.impl.sync.msg.ResStatus;
 import org.aion.zero.impl.sync.statistics.BlockType;
-import org.aion.zero.impl.types.AionBlock;
-import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.impl.types.AionPoSBlock;
+import org.aion.zero.types.StakedBlockHeader;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 
@@ -45,7 +45,7 @@ public class BlockPropagationHandler {
 
     private final IP2pMgr p2pManager;
 
-    private final BlockHeaderValidator<A0BlockHeader> blockHeaderValidator;
+    private final BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator;
 
     private static final Logger log = AionLoggerFactory.getLogger(LogEnum.SYNC.name());
 
@@ -62,7 +62,7 @@ public class BlockPropagationHandler {
             final IAionBlockchain blockchain,
             final SyncStats syncStats,
             final IP2pMgr p2pManager,
-            BlockHeaderValidator<A0BlockHeader> headerValidator,
+            BlockHeaderValidator<StakedBlockHeader> headerValidator,
             final boolean isSyncOnlyNode,
             final byte apiVersion,
             final IPendingStateInternal pendingState) {
@@ -93,7 +93,7 @@ public class BlockPropagationHandler {
     }
 
     // assumption here is that blocks propagated have unique hashes
-    public void propagateNewBlock(final AionBlock block) {
+    public void propagateNewBlock(final AionPoSBlock block) {
         if (block == null) return;
         ByteArrayWrapper hashWrapped = new ByteArrayWrapper(block.getHash());
 
@@ -119,7 +119,7 @@ public class BlockPropagationHandler {
     }
 
     public PropStatus processIncomingBlock(
-            final int nodeId, final String displayId, final AionBlock block) {
+            final int nodeId, final String displayId, final AionPoSBlock block) {
         if (block == null) return PropStatus.DROPPED;
 
         ByteArrayWrapper hashWrapped = new ByteArrayWrapper(block.getHash());
@@ -211,7 +211,7 @@ public class BlockPropagationHandler {
 
         // notify higher td peers in order to limit the rebroadcast on delay of res status updating
         if (result.isBest()) {
-            AionBlock bestBlock = blockchain.getBestBlock();
+            AionPoSBlock bestBlock = blockchain.getBestBlock();
             BigInteger td = bestBlock.getCumulativeDifficulty();
             ResStatus rs =
                     new ResStatus(
@@ -251,7 +251,7 @@ public class BlockPropagationHandler {
         return PropStatus.DROPPED;
     }
 
-    private boolean send(AionBlock block, int nodeId) {
+    private boolean send(AionPoSBlock block, int nodeId) {
         if (isSyncOnlyNode) return true;
 
         // current proposal is to send to all peers with lower blockNumbers

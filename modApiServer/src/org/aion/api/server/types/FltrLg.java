@@ -15,6 +15,7 @@ import org.aion.zero.impl.types.AionTxInfo;
 import org.aion.zero.types.AionTxReceipt;
 import org.aion.zero.types.IAionBlock;
 import org.aion.vm.api.interfaces.IBloomFilter;
+import org.aion.zero.types.PoSBlockInterface;
 
 /** @author chris */
 
@@ -83,7 +84,7 @@ public final class FltrLg extends Fltr {
     // impl.
     // rationale: this way, we only retrieve logs from DB for transactions that the bloom
     // filter gives a positive match for;
-    public boolean onBlock(IAionBlock blk, IAionBlockchain chain) {
+    public boolean onBlock(PoSBlockInterface blk, IAionBlockchain chain) {
         if (matchBloom(new Bloom(blk.getLogBloom()))) {
             int txIndex = 0;
             for (Transaction txn : blk.getTransactionsList()) {

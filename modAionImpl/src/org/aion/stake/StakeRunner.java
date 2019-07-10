@@ -1,6 +1,5 @@
 package org.aion.stake;
 
-
 import static org.aion.util.conversions.Hex.toHexString;
 
 import java.util.ArrayList;
@@ -10,20 +9,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ThreadLocalRandom;
+import org.aion.crypto.ECKey;
+import org.aion.crypto.ECKeyFac;
 import org.aion.evtmgr.IEvent;
 import org.aion.evtmgr.IEventMgr;
 import org.aion.evtmgr.IHandler;
 import org.aion.evtmgr.impl.callback.EventCallback;
 import org.aion.evtmgr.impl.es.EventExecuteService;
 import org.aion.evtmgr.impl.evt.EventConsensus;
+import org.aion.evtmgr.impl.evt.EventConsensus.CALLBACK;
 import org.aion.evtmgr.impl.evt.EventMiner;
-import org.aion.interfaces.block.Solution;
 import org.aion.mcf.stake.AbstractStakeRunner;
+import org.aion.util.bytes.ByteUtil;
 import org.aion.zero.impl.blockchain.AionImpl;
 import org.aion.zero.impl.blockchain.IAionChain;
 import org.aion.zero.impl.config.CfgAion;
-import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.PoSBlockInterface;
 
@@ -39,6 +39,12 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
 
     private Thread thread = null;
 
+    private byte[] privateKey =
+            ByteUtil.hexStringToBytes(
+                    "0xcc76648ce8798bc18130bc9d637995e5c42a922ebeab78795fac58081b9cf9d4069346ca77152d3e42b1630826feef365683038c3b00ff20b0ea42d7c121fa9f");
+
+    private ECKey key = ECKeyFac.inst().fromPrivate(privateKey);
+
     private final class EpMiner implements Runnable {
         boolean go = true;
 
@@ -49,7 +55,7 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
                 if (e.getEventType() == IHandler.TYPE.CONSENSUS.getValue()
                         && e.getCallbackType()
                                 == EventConsensus.CALLBACK.ON_BLOCK_TEMPLATE.getValue()) {
-                    StakeRunner.this.onBlockTemplate((AionBlock) e.getFuncArgs().get(0));
+                    StakeRunner.this.onBlockTemplate((AionPoSBlock) e.getFuncArgs().get(0));
                 } else if (e.getEventType() == IHandler.TYPE.POISONPILL.getValue()) {
                     go = false;
                 }
@@ -101,16 +107,16 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
             isStaking = true;
             fireRunnerStarted();
 
-//            scheduledWorkers.scheduleWithFixedDelay(
-//                    new ShowMiningStatusTask(),
-//                    STATUS_INTERVAL * 2,
-//                    STATUS_INTERVAL,
-//                    TimeUnit.SECONDS);
+            //            scheduledWorkers.scheduleWithFixedDelay(
+            //                    new ShowMiningStatusTask(),
+            //                    STATUS_INTERVAL * 2,
+            //                    STATUS_INTERVAL,
+            //                    TimeUnit.SECONDS);
 
             thread = new Thread(this::staking, "staker");
 
             thread.start();
-                LOG.info("Pos staker starting.");
+            LOG.info("Pos staker starting.");
         }
     }
 
@@ -121,7 +127,7 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
             fireRunnerStopped();
             LOG.info("Pos staker stopping.");
 
-//            scheduledWorkers.shutdownNow();
+            //            scheduledWorkers.shutdownNow();
 
             thread.interrupt();
             LOG.info("Interrupt staker.");
@@ -139,35 +145,30 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
     private void staking() {
         PoSBlockInterface block;
 
-        byte[] nonce;
-
         while (!Thread.currentThread().isInterrupted()) {
             if ((block = proposingBlock) == null) {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(1);
                 } catch (InterruptedException e) {
                     break;
                 }
             } else {
 
-                // A new array must be created each loop
-                // If reference is reused the array contents may be changed
-                // before block sealed causing validation to fail
-                nonce = new byte[32];
-                ThreadLocalRandom.current().nextBytes(nonce);
+                byte[] sig = key.sign(block.getHeader().getMineHash()).getSignature();
 
-                Solution s = miner.mine(block, nonce);
-                if (s != null) {
-                    IEvent ev = new EventConsensus(EventConsensus.CALLBACK.ON_SOLUTION);
-                    ev.setFuncArgs(Collections.singletonList(s));
-                    evtMgr.newEvent(ev);
-                }
+                block.getHeader().setSignature(sig);
+
+                IEvent ev = new EventConsensus(CALLBACK.ON_STAKE_SIG);
+                ev.setFuncArgs(Collections.singletonList(block));
+                evtMgr.newEvent(ev);
+
+                proposingBlock = null;
             }
         }
     }
 
     /** Restart the mining process when a new block template is received. */
-    private void onBlockTemplate(AionBlock block) {
+    private void onBlockTemplate(AionPoSBlock block) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("onBlockTemplate(): {}", toHexString(block.getHash()));
         }
@@ -206,7 +207,7 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
     /** This miner will listen to the ON_BLOCK_TEMPLATE event from the consensus handler. */
     private void registerCallback() {
         // Only register events if actual mining
-        if (cfg.getConsensus().getMining()) {
+        if (cfg.getConsensus().getStaking()) {
             if (this.evtMgr != null) {
                 IHandler hdrCons = this.evtMgr.getHandler(4);
                 if (hdrCons != null) {

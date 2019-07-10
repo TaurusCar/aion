@@ -10,6 +10,7 @@ import org.aion.zero.impl.core.IAionBlockchain;
 import org.aion.zero.impl.sync.Act;
 import org.aion.zero.impl.sync.msg.ResStatus;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.slf4j.Logger;
 
 /**
@@ -69,7 +70,7 @@ public final class ReqStatusHandler extends Handler {
         if ((now - cacheTs) > this.UPDATE_INTERVAL) {
             synchronized (cache) {
                 try {
-                    AionBlock bestBlock = chain.getBestBlock();
+                    AionPoSBlock bestBlock = chain.getBestBlock();
                     cache =
                             new ResStatus(
                                     bestBlock.getNumber(),

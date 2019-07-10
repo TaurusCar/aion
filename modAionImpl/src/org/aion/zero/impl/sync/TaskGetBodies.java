@@ -6,11 +6,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import org.aion.interfaces.block.BlockHeader;
 import org.aion.p2p.IP2pMgr;
 import org.aion.zero.impl.sync.PeerState.State;
 import org.aion.zero.impl.sync.msg.ReqBlocksBodies;
 import org.aion.zero.impl.sync.statistics.RequestType;
-import org.aion.zero.types.A0BlockHeader;
 import org.slf4j.Logger;
 
 /**
@@ -69,7 +69,7 @@ final class TaskGetBodies implements Runnable {
 
             int idHash = hw.getNodeIdHash();
             String displayId = hw.getDisplayId();
-            List<A0BlockHeader> headers = hw.getHeaders();
+            List<BlockHeader> headers = hw.getHeaders();
             if (headers.isEmpty()) {
                 continue;
             }
@@ -86,7 +86,7 @@ final class TaskGetBodies implements Runnable {
                     idHash,
                     displayId,
                     new ReqBlocksBodies(
-                            headers.stream().map(k -> k.getHash()).collect(Collectors.toList())));
+                            headers.stream().map(BlockHeader::getHash).collect(Collectors.toList())));
             stats.updateTotalRequestsToPeer(displayId, RequestType.BODIES);
             stats.updateRequestTime(displayId, System.nanoTime(), RequestType.BODIES);
 

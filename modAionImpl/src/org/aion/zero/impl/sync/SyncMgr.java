@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.aion.evtmgr.IEvent;
 import org.aion.evtmgr.IEventMgr;
 import org.aion.evtmgr.impl.evt.EventConsensus;
+import org.aion.interfaces.block.BlockHeader;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.mcf.config.StatsType;
@@ -32,8 +33,8 @@ import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
 import org.aion.zero.impl.AionBlockchainImpl;
 import org.aion.zero.impl.blockchain.ChainConfiguration;
-import org.aion.zero.impl.types.AionBlock;
-import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.impl.types.AionPoSBlock;
+import org.aion.zero.types.StakedBlockHeader;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 
@@ -81,7 +82,7 @@ public final class SyncMgr {
     private Thread syncGs = null;
     private Thread syncSs = null;
 
-    private BlockHeaderValidator<A0BlockHeader> blockHeaderValidator;
+    private BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator;
     private volatile long timeUpdated = 0;
     private AtomicBoolean queueFull = new AtomicBoolean(false);
 
@@ -177,7 +178,7 @@ public final class SyncMgr {
 
         blocksQueueMax = _blocksQueueMax;
 
-        blockHeaderValidator = new ChainConfiguration().createBlockHeaderValidator();
+        blockHeaderValidator = new ChainConfiguration().createPosBlockHeaderValidator();
 
         long selfBest = chain.getBestBlock().getNumber();
         stats = new SyncStats(selfBest, _showStatus, showStatistics, maxActivePeers);
@@ -263,7 +264,7 @@ public final class SyncMgr {
      * @param _headers List validate headers batch and add batch to imported headers
      */
     public void validateAndAddHeaders(
-            int _nodeIdHashcode, String _displayId, List<A0BlockHeader> _headers) {
+            int _nodeIdHashcode, String _displayId, List<StakedBlockHeader> _headers) {
         if (_headers == null || _headers.isEmpty()) {
             return;
         }
@@ -277,9 +278,9 @@ public final class SyncMgr {
         }
 
         // filter imported block headers
-        List<A0BlockHeader> filtered = new ArrayList<>();
-        A0BlockHeader prev = null;
-        for (A0BlockHeader current : _headers) {
+        List<BlockHeader> filtered = new ArrayList<>();
+        StakedBlockHeader prev = null;
+        for (StakedBlockHeader current : _headers) {
 
             // ignore this batch if any invalidated header
             if (!this.blockHeaderValidator.validate(current, log)) {
@@ -336,12 +337,13 @@ public final class SyncMgr {
         }
 
         // assemble batch
-        List<A0BlockHeader> headers = hw.getHeaders();
-        List<AionBlock> blocks = new ArrayList<>(_bodies.size());
-        Iterator<A0BlockHeader> headerIt = headers.iterator();
+        List<BlockHeader> headers = hw.getHeaders();
+        List<AionPoSBlock> blocks = new ArrayList<>(_bodies.size());
+        Iterator<BlockHeader> headerIt = headers.iterator();
         Iterator<byte[]> bodyIt = _bodies.iterator();
         while (headerIt.hasNext() && bodyIt.hasNext()) {
-            AionBlock block = AionBlock.createBlockFromNetwork(headerIt.next(), bodyIt.next());
+            AionPoSBlock block = AionPoSBlock.createBlockFromNetwork(
+                (StakedBlockHeader) headerIt.next(), bodyIt.next());
             if (block == null) {
                 log.error("<assemble-and-validate-blocks node={}>", _displayId);
                 break;

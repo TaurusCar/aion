@@ -19,16 +19,17 @@ import org.aion.zero.api.BlockConstants;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.core.DiffCalc;
 import org.aion.zero.impl.core.RewardsCalculator;
-import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.valid.AionDifficultyRule;
 import org.aion.zero.impl.valid.AionExtraDataRule;
-import org.aion.zero.impl.valid.AionHeaderVersionRule;
+import org.aion.zero.impl.valid.HeaderSealTypeRule;
 import org.aion.zero.impl.valid.AionPOWRule;
 import org.aion.zero.impl.valid.EnergyConsumedRule;
 import org.aion.zero.impl.valid.EnergyLimitRule;
 import org.aion.zero.impl.valid.EquihashSolutionRule;
+import org.aion.zero.impl.valid.PoSDifficultyRule;
 import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
+import org.aion.zero.types.StakedBlockHeader;
 
 /**
  * Chain configuration handles the default parameters on a particular chain. Also handles the
@@ -37,7 +38,7 @@ import org.aion.zero.types.AionTransaction;
  *
  * @author yao
  */
-public class ChainConfiguration implements IChainCfg<AionBlock, AionTransaction> {
+public class ChainConfiguration implements IChainCfg<AionTransaction> {
 
     protected BlockConstants constants;
     protected IMiner<?, ?> miner;
@@ -115,7 +116,7 @@ public class ChainConfiguration implements IChainCfg<AionBlock, AionTransaction>
                         new EnergyConsumedRule(),
                         new AionPOWRule(),
                         new EquihashSolutionRule(this.getEquihashValidator()),
-                        new AionHeaderVersionRule()));
+                        new HeaderSealTypeRule()));
     }
 
     @Override
@@ -132,5 +133,28 @@ public class ChainConfiguration implements IChainCfg<AionBlock, AionTransaction>
     public GrandParentBlockHeaderValidator<A0BlockHeader> createGrandParentHeaderValidator() {
         return new GrandParentBlockHeaderValidator<>(
             Collections.singletonList(new AionDifficultyRule(this)));
+    }
+
+    public GrandParentBlockHeaderValidator<StakedBlockHeader> createPosGrandParentHeaderValidator() {
+        return new GrandParentBlockHeaderValidator<>(
+            Collections.singletonList(new PoSDifficultyRule(this)));
+    }
+
+    public BlockHeaderValidator<StakedBlockHeader> createPosBlockHeaderValidator() {
+        return new BlockHeaderValidator<>(
+            Arrays.asList(
+                new AionExtraDataRule(this.getConstants().getMaximumExtraDataSize()),
+                new EnergyConsumedRule<StakedBlockHeader>(),
+                new HeaderSealTypeRule()));
+    }
+
+    public ParentBlockHeaderValidator<StakedBlockHeader> createPosParentHeaderValidator() {
+        return new ParentBlockHeaderValidator<>(
+            Arrays.asList(
+                new BlockNumberRule<>(),
+                new TimeStampRule<>(),
+                new EnergyLimitRule(
+                    this.getConstants().getEnergyDivisorLimitLong(),
+                    this.getConstants().getEnergyLowerBoundLong())));
     }
 }

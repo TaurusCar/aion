@@ -6,8 +6,10 @@ import java.util.Date;
 import org.aion.log.LogEnum;
 import org.aion.mcf.core.ImportResult;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +21,7 @@ public class AionBlockLoader {
 
     private DateFormat df = new SimpleDateFormat("HH:mm:ss.SSSS");
 
-    private void blockWork(AionBlock block) {
+    private void blockWork(AionPoSBlock block) {
         if (block.getNumber() >= blockchain.getBestBlock().getNumber()
                 || blockchain.getBlockByHash(block.getHash()) == null) {
 
@@ -50,8 +52,8 @@ public class AionBlockLoader {
         }
     }
 
-    ExecutorPipeline<AionBlock, AionBlock> exec1;
-    ExecutorPipeline<AionBlock, ?> exec2;
+    ExecutorPipeline<AionPoSBlock, AionPoSBlock> exec1;
+    ExecutorPipeline<AionPoSBlock, ?> exec2;
 
     public void loadBlocks() {
         exec1 =
@@ -88,7 +90,7 @@ public class AionBlockLoader {
         blockchain.flush();
     }
 
-    private boolean isValid(A0BlockHeader header) {
+    private boolean isValid(StakedBlockHeader header) {
         return true;
     }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import org.aion.interfaces.block.Block;
 import org.aion.interfaces.tx.Transaction;
-import org.aion.mcf.blockchain.IPowChain;
+import org.aion.mcf.blockchain.PosChain;
 import org.aion.mcf.types.AbstractBlockHeader;
 import org.aion.mcf.types.AbstractBlockSummary;
 import org.aion.mcf.types.AbstractTxReceipt;
@@ -27,7 +27,7 @@ public interface IBlockchain<
                 TX extends Transaction,
                 TR extends AbstractTxReceipt,
                 INFO extends AbstractTxInfo>
-        extends IPowChain<BLK, BH> {
+        extends PosChain<BLK> {
 
     long getSize();
 

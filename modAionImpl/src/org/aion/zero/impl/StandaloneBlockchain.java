@@ -37,14 +37,14 @@ import org.aion.zero.impl.db.AionContractDetailsImpl;
 import org.aion.zero.impl.db.AionRepositoryImpl;
 import org.aion.zero.impl.db.ContractDetailsAion;
 import org.aion.zero.impl.sync.DatabaseType;
-import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionBlockSummary;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.impl.valid.AionExtraDataRule;
-import org.aion.zero.impl.valid.AionHeaderVersionRule;
+import org.aion.zero.impl.valid.HeaderSealTypeRule;
 import org.aion.zero.impl.valid.EnergyConsumedRule;
 import org.aion.zero.impl.valid.TXValidator;
-import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
+import org.aion.zero.types.StakedBlockHeader;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -54,7 +54,7 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 public class StandaloneBlockchain extends AionBlockchainImpl {
 
-    public AionGenesis genesis;
+    public AionGenesisPoS genesis;
 
     private static RepositoryConfig repoConfig =
             new RepositoryConfig() {
@@ -93,11 +93,11 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
         super(config, AionRepositoryImpl.createForTesting(repoConfig), chainConfig);
     }
 
-    public void setGenesis(AionGenesis genesis) {
+    public void setGenesis(AionGenesisPoS genesis) {
         this.genesis = genesis;
     }
 
-    public AionGenesis getGenesis() {
+    public AionGenesisPoS getGenesis() {
         return this.genesis;
     }
 
@@ -198,7 +198,7 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
             return this;
         }
 
-        private AionBlock best = null, parentBest = null;
+        private AionPoSBlock best = null, parentBest = null;
         private byte[] trieData = null;
         private BigInteger totalDiff = null, totalDiffParent = null;
 
@@ -207,9 +207,9 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
          *     AionRepositoryImpl#dumpImportableState(byte[], int, DatabaseType)}
          */
         public Builder withState(
-                AionBlock parentBestBlock,
+                AionPoSBlock parentBestBlock,
                 BigInteger totalDiffParent,
-                AionBlock bestBlock,
+                AionPoSBlock bestBlock,
                 BigInteger totalDiffBest,
                 byte[] serializedTrieBestBlock) {
             this.parentBest = parentBestBlock;
@@ -291,6 +291,11 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
                                 }
 
                                 @Override
+                                public AionAddress getStakerCoinbase() {
+                                    return AddressUtils.ZERO_ADDRESS;
+                                }
+
+                                @Override
                                 public int getFlushInterval() {
                                     return 1;
                                 }
@@ -325,15 +330,15 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
                                  * generated are valid.
                                  */
                                 @Override
-                                public BlockHeaderValidator<A0BlockHeader>
-                                        createBlockHeaderValidator() {
+                                public BlockHeaderValidator<StakedBlockHeader>
+                                        createPosBlockHeaderValidator() {
                                     return new BlockHeaderValidator<>(
                                             Arrays.asList(
                                                     new AionExtraDataRule(
                                                             this.constants
                                                                     .getMaximumExtraDataSize()),
                                                     new EnergyConsumedRule(),
-                                                    new AionHeaderVersionRule()));
+                                                    new HeaderSealTypeRule()));
                                 }
                             };
                 } else {
@@ -348,12 +353,13 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
             StandaloneBlockchain bc =
                     new StandaloneBlockchain(this.a0Config, this.configuration, this.repoConfig);
 
-            AionGenesis.Builder genesisBuilder = new AionGenesis.Builder();
+            AionGenesisPoS.Builder genesisBuilder = new AionGenesisPoS.Builder();
             for (Map.Entry<ByteArrayWrapper, AccountState> acc : this.initialState.entrySet()) {
-                genesisBuilder.addPreminedAccount(new AionAddress(acc.getKey().getData()), acc.getValue());
+                genesisBuilder.addPreminedAccount(
+                        new AionAddress(acc.getKey().getData()), acc.getValue());
             }
 
-            AionGenesis genesis;
+            AionGenesisPoS genesis;
             try {
                 genesis = genesisBuilder.build();
             } catch (HeaderStructureException e) {
@@ -450,7 +456,7 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
     }
 
     @Override
-    public synchronized ImportResult tryToConnect(final AionBlock block) {
+    public synchronized ImportResult tryToConnect(final AionPoSBlock block) {
         ImportResult result = tryToConnectInternal(block, System.currentTimeMillis() / 1000);
 
         if (result == ImportResult.IMPORTED_BEST) {
@@ -463,13 +469,13 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
 
     // TEMPORARY: here to support the ConsensusTest
     public synchronized Pair<ImportResult, AionBlockSummary> tryToConnectAndFetchSummary(
-            AionBlock block) {
+            AionPoSBlock block) {
         return tryToConnectAndFetchSummary(block, System.currentTimeMillis() / 1000, true);
     }
 
     /** Uses the createNewBlockInternal functionality to avoid time-stamping issues. */
-    public AionBlock createBlock(
-            AionBlock parent,
+    public AionPoSBlock createBlock(
+            AionPoSBlock parent,
             List<AionTransaction> txs,
             boolean waitUntilBlockTime,
             long currTimeSeconds) {
@@ -505,11 +511,11 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
 
         try {
             // we also need a grandparent block to calculate difficulty
-            AionBlock grandParentBlock = null;
+            AionPoSBlock grandParentBlock = null;
             if (this.getBlockStore().getBlocksByNumber((int) blockNumber - 1).size() == 0) {
                 // create a grandparent block if none exists
-                A0BlockHeader header =
-                        new A0BlockHeader.Builder()
+                StakedBlockHeader header =
+                        new StakedBlockHeader.Builder()
                                 .withStateRoot(this.getBestBlock().getStateRoot())
                                 .withTxTrieRoot(HashUtil.EMPTY_TRIE_HASH)
                                 .withReceiptTrieRoot(HashUtil.EMPTY_TRIE_HASH)
@@ -519,7 +525,7 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
                                 .withTimestamp(0)
                                 .build();
 
-                AionBlock block = new AionBlock(header, Collections.emptyList());
+                AionPoSBlock block = new AionPoSBlock(header, Collections.emptyList());
                 this.setBestBlock(block);
                 this.getBlockStore().saveBlock(block, this.genesis.getCumulativeDifficulty(), true);
                 grandParentBlock = block;
@@ -532,9 +538,9 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
                                 .getKey();
             }
 
-            A0BlockHeader bestHeader = this.getBestBlock().getHeader();
-            A0BlockHeader header =
-                    new A0BlockHeader.Builder()
+            StakedBlockHeader bestHeader = this.getBestBlock().getHeader();
+            StakedBlockHeader header =
+                    new StakedBlockHeader.Builder()
                             .withParentHash(grandParentBlock.getHash())
                             .withStateRoot(this.getBestBlock().getStateRoot())
                             .withTxTrieRoot(HashUtil.EMPTY_TRIE_HASH)
@@ -544,7 +550,7 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
                             .withTimestamp(1)
                             .withNumber(blockNumber)
                             .build();
-            AionBlock block = new AionBlock(header, Collections.emptyList());
+            AionPoSBlock block = new AionPoSBlock(header, Collections.emptyList());
             this.setBestBlock(block);
             this.getBlockStore().saveBlock(block, this.genesis.getCumulativeDifficulty(), true);
         } catch (Exception e) {

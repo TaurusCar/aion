@@ -14,6 +14,7 @@ import org.aion.p2p.IP2pMgr;
 import org.aion.util.conversions.Hex;
 import org.aion.zero.impl.AionBlockchainImpl;
 import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.slf4j.Logger;
 
 /**
@@ -148,7 +149,7 @@ final class TaskShowStatus implements Runnable {
     }
 
     private String getStatus() {
-        AionBlock selfBest = this.chain.getBestBlock();
+        AionPoSBlock selfBest = this.chain.getBestBlock();
         String selfTd = selfBest.getCumulativeDifficulty().toString(10);
 
         return "sync-status avg-import="

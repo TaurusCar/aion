@@ -19,7 +19,7 @@ public interface IPowListener<
                 BLK extends Block<?, ?>,
                 TX extends Transaction,
                 TXR extends AbstractTxReceipt<?>,
-                BS extends AbstractBlockSummary<?, ?, ?, ?>>
+                BS extends AbstractBlockSummary<?, ?, ?>>
         extends IListenerBase<BLK, TX, TXR, BS> {
     void onBlock(BS blockSummary);
 

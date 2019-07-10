@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.aion.interfaces.block.Block;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.mcf.valid.BlockHeaderValidator;
@@ -26,7 +27,8 @@ import org.aion.zero.impl.AionBlockchainImpl;
 import org.aion.zero.impl.sync.msg.RequestBlocks;
 import org.aion.zero.impl.sync.msg.ResponseBlocks;
 import org.aion.zero.impl.types.AionBlock;
-import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.impl.types.AionPoSBlock;
+import org.aion.zero.types.StakedBlockHeader;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 
@@ -44,13 +46,13 @@ public final class FastSyncManager {
     private final AtomicBoolean completeBlocks = new AtomicBoolean(false);
 
     private final AionBlockchainImpl chain;
-    private final BlockHeaderValidator<A0BlockHeader> blockHeaderValidator;
+    private final BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator;
     private final P2pMgr p2pMgr;
 
     // TODO: consider adding a FAST_SYNC log as well
     private static final Logger log = AionLoggerFactory.getLogger(LogEnum.SYNC.name());
 
-    private AionBlock pivot = null;
+    private Block pivot = null;
 
     Map<ByteArrayWrapper, Long> importedBlockHashes =
             Collections.synchronizedMap(new LRUMap<>(4096));
@@ -64,7 +66,7 @@ public final class FastSyncManager {
 
     public FastSyncManager(
             AionBlockchainImpl chain,
-            BlockHeaderValidator<A0BlockHeader> blockHeaderValidator,
+            BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator,
             final P2pMgr p2pMgr) {
         this.enabled = true;
         this.chain = chain;
@@ -79,7 +81,7 @@ public final class FastSyncManager {
         this.pivot = pivot;
     }
 
-    public AionBlock getPivot() {
+    public Block getPivot() {
         return pivot;
     }
 
@@ -171,13 +173,13 @@ public final class FastSyncManager {
         } else if (chain.getBlockStore().getChainBlockByNumber(1L) == null) {
             // checks for first block for fast fail if incomplete
             return false;
-        } else if (chain.findMissingAncestor(pivot) != null) { // long check done last
+        } else if (chain.findMissingAncestor((AionPoSBlock) pivot) != null) { // long check done last
             // full check from pivot returned block
             // i.e. the chain was incomplete at some point
             return false;
         } else {
             // making the pivot the current best block
-            chain.setBestBlock(pivot);
+            chain.setBestBlock((AionPoSBlock) pivot);
 
             // walk through the chain to update the total difficulty
             chain.getBlockStore().pruneAndCorrect();
@@ -262,7 +264,7 @@ public final class FastSyncManager {
         // process queue data
         try {
             while (!downloadedBlocks.isEmpty()) {
-                BlocksWrapper wrapper = downloadedBlocks.remove();
+                BlocksWrapper<AionPoSBlock> wrapper = downloadedBlocks.remove();
 
                 if (wrapper != null) {
                     wrapper.getBlocks()
@@ -274,7 +276,7 @@ public final class FastSyncManager {
                         } else {
                             // determine if the block is in the middle of the batch
                             boolean isRequred = false;
-                            for (AionBlock block : wrapper.getBlocks()) {
+                            for (AionPoSBlock block : wrapper.getBlocks()) {
                                 ByteArrayWrapper hash = block.getHashWrapper();
                                 receivedBlockHashes.put(hash, firstHash);
                                 if (hash.equals(requiredHash)) {

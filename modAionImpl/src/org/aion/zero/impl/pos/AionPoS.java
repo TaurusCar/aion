@@ -3,32 +3,33 @@ package org.aion.zero.impl.pos;
 import static org.aion.mcf.core.ImportResult.IMPORTED_BEST;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import org.aion.equihash.AionPowSolution;
+import org.aion.crypto.ECKey;
+import org.aion.crypto.ECKeyFac;
 import org.aion.evtmgr.IEvent;
 import org.aion.evtmgr.IEventMgr;
 import org.aion.evtmgr.IHandler;
 import org.aion.evtmgr.impl.callback.EventCallback;
 import org.aion.evtmgr.impl.es.EventExecuteService;
-import org.aion.evtmgr.impl.evt.EventBlock;
 import org.aion.evtmgr.impl.evt.EventConsensus;
+import org.aion.evtmgr.impl.evt.EventConsensus.CALLBACK;
 import org.aion.evtmgr.impl.evt.EventTx;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.mcf.blockchain.IPendingState;
 import org.aion.mcf.core.ImportResult;
+import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
 import org.aion.zero.impl.blockchain.AionImpl;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.core.IAionBlockchain;
 import org.aion.zero.impl.sync.SyncMgr;
-import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.aion.zero.types.AionTransaction;
 import org.slf4j.Logger;
 
@@ -54,9 +55,14 @@ public class AionPoS {
 
     private EventExecuteService ees;
 
-    private byte[] seed;
+    private byte[] seed = new byte[96];
+    private byte[] privateKey =
+            ByteUtil.hexStringToBytes(
+                    "0xcc76648ce8798bc18130bc9d637995e5c42a922ebeab78795fac58081b9cf9d4069346ca77152d3e42b1630826feef365683038c3b00ff20b0ea42d7c121fa9f");
 
-    private final class EpPOW implements Runnable {
+    private ECKey key = ECKeyFac.inst().fromPrivate(privateKey);
+
+    private final class EpPOS implements Runnable {
         boolean go = true;
 
         @Override
@@ -67,14 +73,9 @@ public class AionPoS {
                 if (e.getEventType() == IHandler.TYPE.TX0.getValue()
                         && e.getCallbackType() == EventTx.CALLBACK.PENDINGTXRECEIVED0.getValue()) {
                     newPendingTxReceived.set(true);
-                } else if (e.getEventType() == IHandler.TYPE.BLOCK0.getValue()
-                        && e.getCallbackType() == EventBlock.CALLBACK.ONBEST0.getValue()) {
-                    // create a new block template every time the best block
-                    // updates.
-                    createNewBlockTemplate();
                 } else if (e.getEventType() == IHandler.TYPE.CONSENSUS.getValue()
-                        && e.getCallbackType() == EventConsensus.CALLBACK.ON_SOLUTION.getValue()) {
-                    processSolution((AionPowSolution) e.getFuncArgs().get(0));
+                        && e.getCallbackType() == CALLBACK.ON_STAKE_SIG.getValue()) {
+                    finalizeBlock((AionPoSBlock) e.getFuncArgs().get(0));
                 } else if (e.getEventType() == IHandler.TYPE.POISONPILL.getValue()) {
                     go = false;
                 }
@@ -114,35 +115,40 @@ public class AionPoS {
             }
 
             setupHandler();
-            ees = new EventExecuteService(100_000, "EpPow", Thread.NORM_PRIORITY, LOG);
+            ees = new EventExecuteService(100_000, "EpPos", Thread.NORM_PRIORITY, LOG);
             ees.setFilter(setEvtFilter());
 
             registerCallback();
-            ees.start(new EpPOW());
+            ees.start(new EpPOS());
 
             new Thread(
                             () -> {
                                 while (!shutDown.get()) {
                                     try {
-                                        Thread.sleep(100);
+                                        Thread.sleep(1);
 
                                         long now = System.currentTimeMillis();
-                                        if (now - lastUpdate.get() > 3000
+                                        if (now - lastUpdate.get() > 19999
                                                         && newPendingTxReceived.compareAndSet(
                                                                 true, false)
                                                 || now - lastUpdate.get()
-                                                        > 10000) { // fallback, when
+                                                        > 19999) { // fallback, when
                                             // we never
                                             // received any
                                             // events
-                                            createNewBlockTemplate();
+
+                                            seed =
+                                                    key.sign(blockchain.getBestBlock().getSeed())
+                                                            .toBytes();
+
+                                            createNewBlockTemplate(seed);
                                         }
                                     } catch (InterruptedException e) {
                                         break;
                                     }
                                 }
                             },
-                            "pow")
+                            "pos")
                     .start();
         }
     }
@@ -157,7 +163,7 @@ public class AionPoS {
 
         List<IEvent> events = new ArrayList<>();
         events.add(new EventConsensus(EventConsensus.CALLBACK.ON_BLOCK_TEMPLATE));
-        events.add(new EventConsensus(EventConsensus.CALLBACK.ON_SOLUTION));
+        events.add(new EventConsensus(CALLBACK.ON_STAKE_SIG));
         eventMgr.registerEvent(events);
     }
 
@@ -167,10 +173,10 @@ public class AionPoS {
         eventSN.add(sn + EventTx.CALLBACK.PENDINGTXRECEIVED0.getValue());
 
         sn = IHandler.TYPE.CONSENSUS.getValue() << 8;
-        eventSN.add(sn + EventConsensus.CALLBACK.ON_SOLUTION.getValue());
+        eventSN.add(sn + EventConsensus.CALLBACK.ON_STAKE_SIG.getValue());
 
-        sn = IHandler.TYPE.BLOCK0.getValue() << 8;
-        eventSN.add(sn + EventBlock.CALLBACK.ONBEST0.getValue());
+//        sn = IHandler.TYPE.BLOCK0.getValue() << 8;
+//        eventSN.add(sn + EventBlock.CALLBACK.ONBEST0.getValue());
 
         return eventSN;
     }
@@ -193,51 +199,43 @@ public class AionPoS {
     /**
      * Processes a received solution.
      *
-     * @param solution The generated equihash solution
+     * @param signedBlock the block has been signed.
      */
-    protected synchronized void processSolution(AionPowSolution solution) {
+    protected synchronized void finalizeBlock(AionPoSBlock signedBlock) {
         if (!shutDown.get()) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Best block num [{}]", blockchain.getBestBlock().getNumber());
-                LOG.debug(
-                        "Best block nonce [{}]",
-                        Hex.toHexString(blockchain.getBestBlock().getNonce()));
                 LOG.debug(
                         "Best block hash [{}]",
                         Hex.toHexString(blockchain.getBestBlock().getHash()));
             }
 
-            AionBlock block = (AionBlock) solution.getBlock();
-            if (!Arrays.equals(block.getHeader().getNonce(), new byte[32])
-                    && !(block.getHeader().getNonce().length == 0)) {
-                // block has been processed
-                return;
-            }
-
-            // set the nonce and solution
-            block.getHeader().setNonce(solution.getNonce());
-            block.getHeader().setSolution(solution.getSolution());
+            //            if (!Arrays.equals(signedBlock.getHeader().getSignature(), new byte[64])
+            //                    && !(signedBlock.getHeader().getSignature().length == 0)) {
+            //                // block has been processed
+            //                return;
+            //            }
 
             // This can be improved
-            ImportResult importResult = AionImpl.inst().addNewMinedBlock(block);
+            ImportResult importResult = AionImpl.inst().addNewMinedBlock(signedBlock);
 
             // Check that the new block was successfully added
             if (importResult.isSuccessful()) {
                 if (importResult == IMPORTED_BEST) {
                     LOG.info(
                             "block sealed <num={}, hash={}, diff={}, tx={}>",
-                            block.getNumber(),
-                            block.getShortHash(),
-                            block.getHeader().getDifficultyBI().toString(),
-                            block.getTransactionsList().size());
+                            signedBlock.getNumber(),
+                            signedBlock.getShortHash(),
+                            signedBlock.getHeader().getDifficultyBI().toString(),
+                            signedBlock.getTransactionsList().size());
                 } else {
                     LOG.debug(
                             "block sealed <num={}, hash={}, diff={}, td={}, tx={}, result={}>",
-                            block.getNumber(),
-                            block.getShortHash(),
-                            block.getHeader().getDifficultyBI().toString(),
+                            signedBlock.getNumber(),
+                            signedBlock.getShortHash(),
+                            signedBlock.getHeader().getDifficultyBI().toString(),
                             blockchain.getTotalDifficulty(),
-                            block.getTransactionsList().size(),
+                            signedBlock.getTransactionsList().size(),
                             importResult);
                 }
                 // TODO: fire block mined event
@@ -247,13 +245,14 @@ public class AionPoS {
                                 + "Mined block import result is "
                                 + importResult
                                 + " : "
-                                + block.getShortHash());
+                                + signedBlock.getShortHash());
             }
         }
     }
 
     /** Creates a new block template. */
-    protected synchronized void createNewBlockTemplate() {
+    protected synchronized void createNewBlockTemplate(byte[] seed) {
+
         if (!shutDown.get()) {
             // TODO: Validate the trustworthiness of getNetworkBestBlock - can
             // it be used in DDOS?
@@ -262,16 +261,21 @@ public class AionPoS {
                 return;
             }
 
+            if (seed == null || seed.length != 96) {
+                LOG.error("Invalid seed info.");
+                return;
+            }
+
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Creating a new block template");
             }
 
-            AionBlock bestBlock =
+            AionPoSBlock bestBlock =
                     blockchain.getBlockByNumber(blockchain.getBestBlock().getNumber());
 
             List<AionTransaction> txs = pendingState.getPendingTransactions();
 
-            AionBlock newBlock = blockchain.createNewBlock(bestBlock, txs, false);
+            AionPoSBlock newBlock = blockchain.createNewBlock(bestBlock, txs, seed);
 
             EventConsensus ev = new EventConsensus(EventConsensus.CALLBACK.ON_BLOCK_TEMPLATE);
             ev.setFuncArgs(Collections.singletonList(newBlock));

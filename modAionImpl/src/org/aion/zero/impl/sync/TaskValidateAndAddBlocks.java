@@ -5,12 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import org.aion.interfaces.block.Block;
+import org.aion.interfaces.block.BlockHeader;
 import org.aion.mcf.valid.BlockHeaderValidator;
 import org.aion.vm.api.types.ByteArrayWrapper;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.zero.impl.sync.msg.ResponseBlocks;
-import org.aion.zero.impl.types.AionBlock;
-import org.aion.zero.types.A0BlockHeader;
+import org.aion.zero.impl.types.AionPoSBlock;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 
 /**
@@ -24,7 +26,7 @@ public class TaskValidateAndAddBlocks implements Runnable {
     private final int peerId;
     private final String displayId;
     private final ResponseBlocks response;
-    private final BlockHeaderValidator<A0BlockHeader> blockHeaderValidator;
+    private final BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator;
     private final BlockingQueue<BlocksWrapper> downloadedBlocks;
     private final Map<ByteArrayWrapper, Long> importedBlockHashes;
     private final Map<ByteArrayWrapper, ByteArrayWrapper> receivedBlockHashes;
@@ -34,7 +36,7 @@ public class TaskValidateAndAddBlocks implements Runnable {
             final int peerId,
             final String displayId,
             final ResponseBlocks response,
-            final BlockHeaderValidator<A0BlockHeader> blockHeaderValidator,
+            final BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator,
             final BlockingQueue<BlocksWrapper> downloadedBlocks,
             final Map<ByteArrayWrapper, Long> importedBlockHashes,
             final Map<ByteArrayWrapper, ByteArrayWrapper> receivedBlockHashes,
@@ -53,7 +55,7 @@ public class TaskValidateAndAddBlocks implements Runnable {
     public void run() {
         // TODO: re-evaluate priority when full functionality is implemented
         Thread.currentThread().setPriority(Thread.NORM_PRIORITY);
-        AionBlock firstBlock = response.getBlocks().get(0);
+        AionPoSBlock firstBlock = (AionPoSBlock) response.getBlocks().get(0);
         Thread.currentThread().setName("check-" + displayId + "-" + firstBlock.getShortHash());
 
         // log start of operation
@@ -65,12 +67,12 @@ public class TaskValidateAndAddBlocks implements Runnable {
                     response.getBlocks().size());
         }
 
-        List<AionBlock> filtered = new ArrayList<>();
+        List<Block> filtered = new ArrayList<>();
         List<ByteArrayWrapper> batchHashes = new ArrayList<>();
 
-        A0BlockHeader currentHeader, previousHeader = null;
-        for (AionBlock currentBlock : response.getBlocks()) {
-            ByteArrayWrapper hash = currentBlock.getHashWrapper();
+        BlockHeader currentHeader, previousHeader = null;
+        for (Block currentBlock : response.getBlocks()) {
+            ByteArrayWrapper hash = ((AionPoSBlock)currentBlock).getHashWrapper();
             if (importedBlockHashes.containsKey(hash) // exclude imported
                     || receivedBlockHashes.containsKey(hash)) { // exclude known hashes
                 previousHeader = currentBlock.getHeader();
@@ -80,7 +82,7 @@ public class TaskValidateAndAddBlocks implements Runnable {
 
             // ignore batch if any invalidated header
             // TODO: we could do partial evaluations here (as per fast sync specs)
-            if (!this.blockHeaderValidator.validate(currentHeader, log)) {
+            if (!this.blockHeaderValidator.validate((StakedBlockHeader) currentHeader, log)) {
                 if (log.isDebugEnabled()) {
                     log.debug(
                             "<invalid-header num={} hash={} from peer={}/{}>",

@@ -16,7 +16,7 @@ import org.aion.zero.impl.sync.Act;
 import org.aion.zero.impl.sync.SyncMgr;
 import org.aion.zero.impl.sync.msg.ReqBlocksBodies;
 import org.aion.zero.impl.sync.msg.ResBlocksBodies;
-import org.aion.zero.impl.types.AionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 
@@ -82,7 +82,7 @@ public final class ReqBlocksBodiesHandler extends Handler {
                 if (blockBytes != null) {
                     blockBytesForadd = blockBytes;
                 } else {
-                    AionBlock block = blockchain.getBlockByHash(hash);
+                    AionPoSBlock block = blockchain.getBlockByHash(hash);
 
                     if (block != null) {
                         blockBytesForadd = block.getEncodedBody();

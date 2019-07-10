@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import org.aion.interfaces.block.Block;
 import org.aion.interfaces.db.ByteArrayKeyValueDatabase;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
@@ -36,12 +35,12 @@ import org.aion.rlp.RLPElement;
 import org.aion.rlp.RLPList;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
-import org.aion.zero.impl.types.AionBlock;
-import org.aion.zero.types.A0BlockHeader;
-import org.aion.zero.types.IAionBlock;
+import org.aion.zero.impl.types.AionPoSBlock;
+import org.aion.zero.types.PoSBlockInterface;
+import org.aion.zero.types.StakedBlockHeader;
 import org.slf4j.Logger;
 
-public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHeader> {
+public class AionBlockStore extends AbstractPowBlockstore<AionPoSBlock, StakedBlockHeader> {
 
     private static final Logger LOG = AionLoggerFactory.getLogger(LogEnum.DB.name());
     private static final Logger LOG_CONS = AionLoggerFactory.getLogger(LogEnum.CONS.name());
@@ -49,11 +48,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     protected ReadWriteLock lock = new ReentrantReadWriteLock();
 
     private DataSourceArray<List<BlockInfo>> index;
-    private ObjectDataSource<AionBlock> blocks;
+    private ObjectDataSource<AionPoSBlock> blocks;
 
     private boolean checkIntegrity = true;
 
-    private Deque<IAionBlock> branchingBlk = new ArrayDeque<>(),
+    private Deque<PoSBlockInterface> branchingBlk = new ArrayDeque<>(),
             preBranchingBlk = new ArrayDeque<>();
     private long branchingLevel;
 
@@ -76,20 +75,20 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         this.blocks =
                 new ObjectDataSource<>(
                         blocks,
-                        new Serializer<AionBlock, byte[]>() {
-                            @Override
-                            public byte[] serialize(AionBlock block) {
-                                return block.getEncoded();
-                            }
+                    new Serializer<>() {
+                        @Override
+                        public byte[] serialize(AionPoSBlock block) {
+                            return block.getEncoded();
+                        }
 
-                            @Override
-                            public AionBlock deserialize(byte[] bytes) {
-                                return new AionBlock(bytes);
-                            }
-                        });
+                        @Override
+                        public AionPoSBlock deserialize(byte[] bytes) {
+                            return new AionPoSBlock(bytes);
+                        }
+                    });
     }
 
-    public AionBlock getBestBlock() {
+    public AionPoSBlock getBestBlock() {
         lock.readLock().lock();
 
         try {
@@ -98,7 +97,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 return null;
             }
 
-            AionBlock bestBlock = getChainBlockByNumber(maxLevel);
+            AionPoSBlock bestBlock = getChainBlockByNumber(maxLevel);
             if (bestBlock != null) {
                 return bestBlock;
             }
@@ -147,8 +146,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         }
     }
 
-    @Override
-    public void saveBlock(AionBlock block, BigInteger cummDifficulty, boolean mainChain) {
+    public void saveBlock(AionPoSBlock block, BigInteger cummDifficulty, boolean mainChain) {
         lock.writeLock().lock();
         try {
             addInternalBlock(block, cummDifficulty, mainChain);
@@ -158,7 +156,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     /** @implNote The method calling this method must handle the locking. */
-    private void addInternalBlock(AionBlock block, BigInteger cummDifficulty, boolean mainChain) {
+    private void addInternalBlock(AionPoSBlock block, BigInteger cummDifficulty, boolean mainChain) {
         long blockNumber = block.getNumber();
         List<BlockInfo> blockInfos =
                 blockNumber >= index.size() ? new ArrayList<>() : index.get(blockNumber);
@@ -184,12 +182,12 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         index.set(block.getNumber(), blockInfos);
     }
 
-    public List<Map.Entry<AionBlock, Map.Entry<BigInteger, Boolean>>> getBlocksByNumber(
+    public List<Map.Entry<AionPoSBlock, Map.Entry<BigInteger, Boolean>>> getBlocksByNumber(
             long number) {
         lock.readLock().lock();
 
         try {
-            List<Map.Entry<AionBlock, Map.Entry<BigInteger, Boolean>>> result = new ArrayList<>();
+            List<Map.Entry<AionPoSBlock, Map.Entry<BigInteger, Boolean>>> result = new ArrayList<>();
 
             if (number >= index.size()) {
                 return result;
@@ -200,7 +198,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             for (BlockInfo blockInfo : blockInfos) {
 
                 byte[] hash = blockInfo.getHash();
-                AionBlock block = blocks.get(hash);
+                AionPoSBlock block = blocks.get(hash);
 
                 result.add(
                         Map.entry(
@@ -215,7 +213,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     @Override
-    public AionBlock getChainBlockByNumber(long number) {
+    public AionPoSBlock getChainBlockByNumber(long number) {
         lock.readLock().lock();
 
         try {
@@ -233,7 +231,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             for (BlockInfo blockInfo : blockInfos) {
                 if (blockInfo.isMainChain()) {
                     byte[] hash = blockInfo.getHash();
-                    AionBlock block = blocks.get(hash);
+                    AionPoSBlock block = blocks.get(hash);
                     if (block != null) {
                         block.setCumulativeDifficulty(blockInfo.cummDifficulty);
                         return block;
@@ -261,7 +259,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
      *     first > last} the blocks are returned in descending order of their height, otherwise when
      *     {@code first < last} the blocks are returned in ascending order of their height.
      */
-    public List<Block> getBlocksByRange(long first, long last) {
+    public List<AionPoSBlock> getBlocksByRange(long first, long last) {
         if (first <= 0L) {
             return null;
         }
@@ -269,7 +267,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         lock.readLock().lock();
 
         try {
-            AionBlock block = getChainBlockByNumber(first);
+            AionPoSBlock block = getChainBlockByNumber(first);
             if (block == null) {
                 // invalid request
                 return null;
@@ -278,7 +276,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             if (first == last) {
                 return List.of(block);
             } else if (first > last) { // first is highest -> can query directly by parent hash
-                List<Block> blocks = new ArrayList<>();
+                List<AionPoSBlock> blocks = new ArrayList<>();
                 blocks.add(block);
 
                 for (long i = first - 1; i >= (last > 0 ? last : 1); i--) {
@@ -289,7 +287,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                 "Encountered a kernel database corruption: cannot find block at level {} in data store.",
                                 i);
                         LOG.error(
-                            " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", i - 1);
+                                " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                                i - 1);
                         return null; // stops at any invalid data
                     } else {
                         blocks.add(block);
@@ -297,8 +296,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 }
                 return blocks;
             } else { // last is highest
-                LinkedList<Block> blocks = new LinkedList<>();
-                AionBlock lastBlock = getChainBlockByNumber(last);
+                LinkedList<AionPoSBlock> blocks = new LinkedList<>();
+                AionPoSBlock lastBlock = getChainBlockByNumber(last);
 
                 if (lastBlock == null) { // assuming height was above best block
                     // attempt to get best block
@@ -306,7 +305,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                     if (lastBlock == null) {
                         LOG.error(
                                 "Encountered a kernel database corruption: cannot find best block in data store.");
-                        LOG.error("Please reboot your node to trigger automatic database recovery by the kernel." );
+                        LOG.error(
+                                "Please reboot your node to trigger automatic database recovery by the kernel.");
                         return null;
                     } else if (last < lastBlock.getNumber()) {
                         // the block should have been stored but null was returned above
@@ -314,7 +314,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                 "Encountered a kernel database corruption: cannot find block at level {} in data store.",
                                 last);
                         LOG.error(
-                            " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", last - 1);
+                                " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                                last - 1);
                         return null;
                     }
                 }
@@ -331,7 +332,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                 "Encountered a kernel database corruption: cannot find block at level {} in block data store.",
                                 i);
                         LOG.error(
-                            " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", i - 1);
+                                " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                                i - 1);
                         return null;
                     } else {
                         // always adding at the beginning of the list
@@ -350,7 +352,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     @SuppressWarnings("Duplicates")
-    public Map.Entry<AionBlock, BigInteger> getChainBlockByNumberWithTotalDifficulty(long number) {
+    public Map.Entry<AionPoSBlock, BigInteger> getChainBlockByNumberWithTotalDifficulty(long number) {
         lock.readLock().lock();
 
         try {
@@ -364,7 +366,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                         "Encountered a kernel database corruption: cannot find blockInfos at level {} in index data store.",
                         number);
                 LOG.error(
-                    " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", number - 1);
+                        " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                        number - 1);
                 return null;
             }
 
@@ -382,7 +385,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     @Override
-    public AionBlock getBlockByHash(byte[] hash) {
+    public AionPoSBlock getBlockByHash(byte[] hash) {
         lock.readLock().lock();
         try {
             return blocks.get(hash);
@@ -396,19 +399,18 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         return getBlockByHash(hash) != null;
     }
 
-    /** Retrieve the total difficulty given the block hash.
+    /**
+     * Retrieve the total difficulty given the block hash.
      *
      * @param hash the block hash
-     * @return 0 when the hash info is not matched or database corruption. Otherwise, return the total difficulty
-     * info stored in the index database.
+     * @return 0 when the hash info is not matched or database corruption. Otherwise, return the
+     *     total difficulty info stored in the index database.
      */
-
-    @Override
     public BigInteger getTotalDifficultyForHash(byte[] hash) {
         lock.readLock().lock();
 
         try {
-            IAionBlock block = this.getBlockByHash(hash);
+            PoSBlockInterface block = this.getBlockByHash(hash);
             if (block == null) {
                 return ZERO;
             }
@@ -416,10 +418,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             List<BlockInfo> blockInfos = index.get(block.getNumber());
             if (blockInfos == null) {
                 LOG.error(
-                    "Encountered a kernel database corruption: cannot find blockInfos at level {} in index data store.",
-                    block.getNumber());
+                        "Encountered a kernel database corruption: cannot find blockInfos at level {} in index data store.",
+                        block.getNumber());
                 LOG.error(
-                    " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", block.getNumber() - 1);
+                        " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                        block.getNumber() - 1);
                 return ZERO;
             }
 
@@ -430,25 +433,27 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             }
 
             LOG.error(
-                "Encountered a kernel database corruption: cannot find the matched hash of blockInfos at level {} in index data store.",
-                block.getNumber());
+                    "Encountered a kernel database corruption: cannot find the matched hash of blockInfos at level {} in index data store.",
+                    block.getNumber());
             LOG.error(
-                " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", block.getNumber() - 1);
+                    " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                    block.getNumber() - 1);
             return ZERO;
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    /** Retrieve the total difficulty from the index database.
-     * Try to look at any mainchain block info in the highest level. If can't find it, then go backward
-     * to find the highest mainchain block info. after backward 128 blocks still can't find the mainchain
-     * block, then we throw the exception for notice user the database corrupt or branch too deep.
-     * @exception IllegalStateException reflect the database corrupt or mainchain branch goes too deep.
+    /**
+     * Retrieve the total difficulty from the index database. Try to look at any mainchain block
+     * info in the highest level. If can't find it, then go backward to find the highest mainchain
+     * block info. after backward 128 blocks still can't find the mainchain block, then we throw the
+     * exception for notice user the database corrupt or branch too deep.
+     *
+     * @exception IllegalStateException reflect the database corrupt or mainchain branch goes too
+     *     deep.
      * @return the total difficulty of the highest block in the mainchain.
      */
-
-    @Override
     public BigInteger getTotalDifficulty() {
         lock.readLock().lock();
 
@@ -464,7 +469,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 }
             }
 
-            // Can't find the mainchain blockInfo in the highest block index. Looking backward to see
+            // Can't find the mainchain blockInfo in the highest block index. Looking backward to
+            // see
             // have any mainchain block info in the previous levels.
             int depth = 0;
             while (depth < 128) {
@@ -481,8 +487,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
 
             LOG.error(
                     "Encountered a kernel database corruption: cannot find blockInfos at level {} in index data store. "
-                        + "Or the branch is too deep, it should not happens. "
-                        + "Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                            + "Or the branch is too deep, it should not happens. "
+                            + "Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
                     maxNumber,
                     maxNumber - 1);
 
@@ -508,10 +514,10 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         lock.readLock().lock();
 
         try {
-            List<AionBlock> blocks = getListBlocksEndWith(hash, number);
+            List<AionPoSBlock> blocks = getListBlocksEndWith(hash, number);
             List<byte[]> hashes = new ArrayList<>(blocks.size());
 
-            for (IAionBlock b : blocks) {
+            for (PoSBlockInterface b : blocks) {
                 hashes.add(b.getHash());
             }
 
@@ -522,13 +528,13 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     @Override
-    public List<A0BlockHeader> getListHeadersEndWith(byte[] hash, long qty) {
+    public List<StakedBlockHeader> getListHeadersEndWith(byte[] hash, long qty) {
         lock.readLock().lock();
         try {
-            List<AionBlock> blocks = getListBlocksEndWith(hash, qty);
-            List<A0BlockHeader> headers = new ArrayList<>(blocks.size());
+            List<AionPoSBlock> blocks = getListBlocksEndWith(hash, qty);
+            List<StakedBlockHeader> headers = new ArrayList<>(blocks.size());
 
-            for (IAionBlock b : blocks) {
+            for (PoSBlockInterface b : blocks) {
                 headers.add(b.getHeader());
             }
 
@@ -539,7 +545,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     @Override
-    public List<AionBlock> getListBlocksEndWith(byte[] hash, long qty) {
+    public List<AionPoSBlock> getListBlocksEndWith(byte[] hash, long qty) {
         lock.readLock().lock();
         try {
             return getListBlocksEndWithInner(hash, qty);
@@ -549,15 +555,15 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     /** @implNote The method calling this method must handle the locking. */
-    private List<AionBlock> getListBlocksEndWithInner(byte[] hash, long qty) {
+    private List<AionPoSBlock> getListBlocksEndWithInner(byte[] hash, long qty) {
         // locks acquired by calling method
-        AionBlock block = this.blocks.get(hash);
+        AionPoSBlock block = this.blocks.get(hash);
 
         if (block == null) {
             return new ArrayList<>();
         }
 
-        List<AionBlock> blocks = new ArrayList<>((int) qty);
+        List<AionPoSBlock> blocks = new ArrayList<>((int) qty);
 
         for (int i = 0; i < qty; ++i) {
             blocks.add(block);
@@ -571,16 +577,16 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     @Override
-    public void reBranch(AionBlock forkBlock) {
+    public void reBranch(AionPoSBlock forkBlock) {
         lock.writeLock().lock();
 
         try {
-            IAionBlock bestBlock = getBestBlock();
+            PoSBlockInterface bestBlock = getBestBlock();
 
             long currentLevel = Math.max(bestBlock.getNumber(), forkBlock.getNumber());
 
             // 1. First ensure that you are one the save level
-            IAionBlock forkLine = forkBlock;
+            PoSBlockInterface forkLine = forkBlock;
             if (forkBlock.getNumber() > bestBlock.getNumber()) {
                 branchingLevel = currentLevel;
 
@@ -598,14 +604,15 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                 "Encountered a kernel database corruption: cannot find block with fork line hash {} at the level {} in index data store.",
                                 ByteUtil.toHexString(forkLine.getHash()),
                                 currentLevel);
-                        LOG.error("Please reboot your node to trigger automatic database recovery by the kernel." );
+                        LOG.error(
+                                "Please reboot your node to trigger automatic database recovery by the kernel.");
                     }
                     forkLine = getBlockByHash(forkLine.getParentHash());
                     --currentLevel;
                 }
             }
 
-            IAionBlock bestLine = bestBlock;
+            PoSBlockInterface bestLine = bestBlock;
             if (bestBlock.getNumber() > forkBlock.getNumber()) {
 
                 while (currentLevel > forkBlock.getNumber()) {
@@ -620,10 +627,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                         preBranchingBlk.push(getBlockByHash(blockInfo.getHash()));
                     } else {
                         LOG.error(
-                            "Encountered a kernel database corruption: cannot find block with best line hash {} at the level {} in index data store.",
-                            ByteUtil.toHexString(forkLine.getHash()),
-                            currentLevel);
-                        LOG.error("Please reboot your node to trigger automatic database recovery by the kernel." );
+                                "Encountered a kernel database corruption: cannot find block with best line hash {} at the level {} in index data store.",
+                                ByteUtil.toHexString(forkLine.getHash()),
+                                currentLevel);
+                        LOG.error(
+                                "Please reboot your node to trigger automatic database recovery by the kernel.");
                     }
                     bestLine = getBlockByHash(bestLine.getParentHash());
                     --currentLevel;
@@ -646,13 +654,13 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
 
             LOG_CONS.debug("===== Block details before branch =====");
             while (!preBranchingBlk.isEmpty()) {
-                IAionBlock blk = preBranchingBlk.pop();
+                PoSBlockInterface blk = preBranchingBlk.pop();
                 LOG_CONS.debug("blk: {}", blk.toString());
             }
 
             LOG_CONS.debug("===== Block details after branch =====");
             while (!branchingBlk.isEmpty()) {
-                IAionBlock blk = branchingBlk.pop();
+                PoSBlockInterface blk = branchingBlk.pop();
                 LOG_CONS.debug("blk: {}", blk.toString());
             }
 
@@ -666,7 +674,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     /** @implNote The method calling this method must handle the locking. */
-    private void loopBackToCommonBlock(IAionBlock bestLine, IAionBlock forkLine) {
+    private void loopBackToCommonBlock(PoSBlockInterface bestLine, PoSBlockInterface forkLine) {
         long currentLevel = bestLine.getNumber();
 
         if (forkLine.getNumber() != currentLevel) {
@@ -685,10 +693,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 preBranchingBlk.push(getBlockByHash(bestInfo.getHash()));
             } else {
                 LOG.error(
-                    "Encountered a kernel database corruption: cannot find block with best line hash {} at the level {} in index data store.",
-                    ByteUtil.toHexString(forkLine.getHash()),
-                    currentLevel);
-                LOG.error("Please reboot your node to trigger automatic database recovery by the kernel." );
+                        "Encountered a kernel database corruption: cannot find block with best line hash {} at the level {} in index data store.",
+                        ByteUtil.toHexString(forkLine.getHash()),
+                        currentLevel);
+                LOG.error(
+                        "Please reboot your node to trigger automatic database recovery by the kernel.");
             }
 
             BlockInfo forkInfo = getBlockInfoForHash(levelBlocks, forkLine.getHash());
@@ -700,10 +709,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 branchingBlk.push(getBlockByHash(forkInfo.getHash()));
             } else {
                 LOG.error(
-                    "Encountered a kernel database corruption: cannot find block with fork line hash {} at the level {} in index data store.",
-                    ByteUtil.toHexString(forkLine.getHash()),
-                    currentLevel);
-                LOG.error("Please reboot your node to trigger automatic database recovery by the kernel." );
+                        "Encountered a kernel database corruption: cannot find block with fork line hash {} at the level {} in index data store.",
+                        ByteUtil.toHexString(forkLine.getHash()),
+                        currentLevel);
+                LOG.error(
+                        "Please reboot your node to trigger automatic database recovery by the kernel.");
             }
 
             bestLine = getBlockByHash(bestLine.getParentHash());
@@ -727,7 +737,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         lock.writeLock().lock();
 
         try {
-            IAionBlock bestBlock = getBestBlock();
+            PoSBlockInterface bestBlock = getBestBlock();
 
             long currentLevel = bestBlock.getNumber();
 
@@ -737,7 +747,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             }
 
             // walk back removing blocks greater than the given level value
-            IAionBlock bestLine = bestBlock;
+            PoSBlockInterface bestLine = bestBlock;
             while (currentLevel > previousLevel) {
 
                 // remove all the blocks at that level
@@ -749,7 +759,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                     + currentLevel
                                     + " when information should exist.");
 
-                    LOG.error("Please reboot your node to trigger automatic database recovery by the kernel." );
+                    LOG.error(
+                            "Please reboot your node to trigger automatic database recovery by the kernel.");
                 } else {
                     for (BlockInfo bk_info : currentLevelBlocks) {
                         blocks.delete(bk_info.getHash());
@@ -773,7 +784,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                 + previousLevel
                                 + " is null. Reverting further back may be required.");
                 LOG.error(
-                    " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", previousLevel - 1);
+                        " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                        previousLevel - 1);
             } else {
                 // update the main chain based on difficulty, if needed
                 List<BlockInfo> blocks = getBlockInfoForLevel(previousLevel);
@@ -794,8 +806,12 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                         + "Rebuilding information.");
 
                         // recreate missing block info
-                        blockInfo = new BlockInfo(bestLine.getHash(), getTotalDifficultyForHash(bestLine.getParentHash())
-                            .add(bestLine.getHeader().getDifficultyBI()), true);
+                        blockInfo =
+                                new BlockInfo(
+                                        bestLine.getHash(),
+                                        getTotalDifficultyForHash(bestLine.getParentHash())
+                                                .add(bestLine.getHeader().getDifficultyBI()),
+                                        true);
                         blocks.add(blockInfo);
                     }
 
@@ -808,7 +824,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                     }
 
                     // 2. Loop back on each level until common block
-                    IAionBlock forkLine = getBlockByHash(maxTDInfo.getHash());
+                    PoSBlockInterface forkLine = getBlockByHash(maxTDInfo.getHash());
                     loopBackToCommonBlock(bestLine, forkLine);
                 }
             }
@@ -822,7 +838,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
         lock.writeLock().lock();
 
         try {
-            IAionBlock block = getBestBlock();
+            PoSBlockInterface block = getBestBlock();
             long initialLevel = block.getNumber();
             long level = initialLevel;
 
@@ -837,7 +853,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                     + " missing from the database. "
                                     + "Cannot proceed with block pruning and total difficulty updates.");
                     LOG.error(
-                        " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}", level - 1);
+                            " Please shutdown the kernel and rollback the database by executing:\t./aion.sh -n <network> -r {}",
+                            level - 1);
                 }
                 level = block.getNumber();
             }
@@ -865,7 +882,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     /** @implNote The method calling this method must handle the locking. */
-    private void pruneSideChains(IAionBlock block) {
+    private void pruneSideChains(PoSBlockInterface block) {
         // current level
         long level = block.getNumber();
         byte[] blockHash = block.getHash();
@@ -909,14 +926,18 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             // correct block info
             BlockInfo blockInfo = levelBlocks.remove(0);
             // total difficulty previously set to block difficulty
-            levelBlocks.add(new BlockInfo(blockInfo.getHash(), blockInfo.getCummDifficulty().add(parentTotalDifficulty), blockInfo.isMainChain()));
+            levelBlocks.add(
+                    new BlockInfo(
+                            blockInfo.getHash(),
+                            blockInfo.getCummDifficulty().add(parentTotalDifficulty),
+                            blockInfo.isMainChain()));
             setBlockInfoForLevel(level, levelBlocks);
 
             return blockInfo.getCummDifficulty();
         }
     }
 
-    public BigInteger correctIndexEntry(AionBlock block, BigInteger parentTotalDifficulty) {
+    public BigInteger correctIndexEntry(AionPoSBlock block, BigInteger parentTotalDifficulty) {
         lock.writeLock().lock();
 
         try {
@@ -928,7 +949,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
 
             // correct block info
             // assuming side chain, with warnings upon encountered issues
-            BlockInfo blockInfo = new BlockInfo(block.getHash(), block.getDifficultyBI().add(parentTotalDifficulty), false);
+            BlockInfo blockInfo =
+                    new BlockInfo(
+                            block.getHash(),
+                            block.getDifficultyBI().add(parentTotalDifficulty),
+                            false);
 
             // looking through the other block info on that level
             List<BlockInfo> mainChain = new ArrayList<>();
@@ -943,7 +968,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                 LOG.error(
                         "The database is corrupted. There are two different main chain blocks at level {}."
                                 + " Please shutdown the kernel and rollback the block information by executing:\t./aion.sh -r {} -n <network>",
-                        blockNumber, blockNumber - 1);
+                        blockNumber,
+                        blockNumber - 1);
             }
 
             levelBlocks.add(blockInfo);
@@ -984,7 +1010,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                     + "\nBlock on main chain: "
                                     + String.valueOf(bi.isMainChain()).toUpperCase());
                     writer.newLine();
-                    AionBlock blk = getBlockByHash(bi.getHash());
+                    AionPoSBlock blk = getBlockByHash(bi.getHash());
                     if (blk != null) {
                         writer.append("\nFull block data:\n");
                         writer.append(blk.toString());
@@ -1040,7 +1066,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
                                         + "\nBlock on main chain: "
                                         + String.valueOf(bi.isMainChain()).toUpperCase());
                         writer.newLine();
-                        AionBlock blk = getBlockByHash(bi.getHash());
+                        AionPoSBlock blk = getBlockByHash(bi.getHash());
                         if (blk != null) {
                             writer.append("\nFull block data:\n");
                             writer.append(blk.toString());
@@ -1122,11 +1148,11 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     }
 
     /** Sets the block as main chain and all its ancestors. Used by the data recovery methods. */
-    public void correctMainChain(AionBlock block, Logger log) {
+    public void correctMainChain(AionPoSBlock block, Logger log) {
         lock.writeLock().lock();
 
         try {
-            AionBlock currentBlock = block;
+            AionPoSBlock currentBlock = block;
             if (currentBlock != null) {
                 List<BlockInfo> infos = getBlockInfoForLevel(currentBlock.getNumber());
                 BlockInfo thisBlockInfo = getBlockInfoForHash(infos, currentBlock.getHash());
@@ -1162,7 +1188,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
     public static class BlockInfo implements Serializable {
 
         /**
-         * Constructor of the BlockInfo instead of the default constructor, requires 3 arguments input.
+         * Constructor of the BlockInfo instead of the default constructor, requires 3 arguments
+         * input.
          *
          * @param hash block hash
          * @param cummDifficulty the cummulateDifficulty of this block
@@ -1182,7 +1209,8 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
             RLPList outerList = RLP.decode2(ser);
 
             if (outerList.isEmpty()) {
-                throw new IllegalArgumentException("Rlp decode error during construct the BlockInfo.");
+                throw new IllegalArgumentException(
+                        "Rlp decode error during construct the BlockInfo.");
             }
 
             RLPList list = (RLPList) outerList.get(0);
@@ -1378,7 +1406,7 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
 
             // check each block's total difficulty till genesis
             boolean correct = true;
-            AionBlock block = getBestBlock();
+            AionPoSBlock block = getBestBlock();
             long start, round, time;
             start = round = System.currentTimeMillis();
             long bestBlockNumber = block.getNumber();
@@ -1474,8 +1502,14 @@ public class AionBlockStore extends AbstractPowBlockstore<AionBlock, A0BlockHead
 
                     for (BlockInfo bi : infos) {
                         block = getBlockByHash(bi.getHash());
-                        bi = new BlockInfo(block.getHash(), block.getDifficultyBI()
-                            .add(getTotalDifficultyForHash(block.getParentHash())), bi.isMainChain());
+                        bi =
+                                new BlockInfo(
+                                        block.getHash(),
+                                        block.getDifficultyBI()
+                                                .add(
+                                                        getTotalDifficultyForHash(
+                                                                block.getParentHash())),
+                                        bi.isMainChain());
                         LOG_CONS.info(
                                 "Correcting total difficulty for block hash: {} number: {} to {}.",
                                 block.getShortHash(),
