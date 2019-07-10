@@ -81,6 +81,7 @@ public class ApiAionTest {
                     new AionTransaction(
                             new byte[0],
                             new AionAddress(new byte[32]),
+                            new AionAddress(new byte[32]),
                             new byte[0],
                             new byte[0],
                             0L,

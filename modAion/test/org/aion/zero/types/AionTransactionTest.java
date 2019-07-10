@@ -77,7 +77,14 @@ public class AionTransactionTest {
         long nrgPrice = DataWordImpl.ONE.longValue();
 
         AionTransaction tx =
-                new AionTransaction(nonce, new AionAddress(to), value, data, nrg, nrgPrice);
+                new AionTransaction(
+                        nonce,
+                        new AionAddress(from),
+                        new AionAddress(to),
+                        value,
+                        data,
+                        nrg,
+                        nrgPrice);
 
         long expected = 21000;
         for (byte b : data) {
@@ -96,7 +103,8 @@ public class AionTransactionTest {
         long nrg = new DataWordImpl(1000L).longValue();
         long nrgPrice = DataWordImpl.ONE.longValue();
 
-        AionTransaction tx = new AionTransaction(nonce, to, value, data, nrg, nrgPrice);
+        AionTransaction tx =
+                new AionTransaction(nonce, new AionAddress(from), to, value, data, nrg, nrgPrice);
 
         long expected = 200000 + 21000;
         for (byte b : data) {
