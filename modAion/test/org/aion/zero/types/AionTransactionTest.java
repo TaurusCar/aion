@@ -25,7 +25,8 @@ public class AionTransactionTest {
         assertArrayEquals(tx.getTimestamp(), tx2.getTimestamp());
         assertArrayEquals(tx.getSignature().toBytes(), tx2.getSignature().toBytes());
 
-        assertArrayEquals(tx.getEncoded(), tx2.getEncoded());
+        assertArrayEquals(
+                TransactionRlpCodec.getEncoding(tx), TransactionRlpCodec.getEncoding(tx2));
     }
 
     @Test
@@ -41,7 +42,8 @@ public class AionTransactionTest {
         AionTransaction tx = new AionTransaction(nonce, to, value, data, nrg, nrgPrice, type);
         tx.sign(ECKeyFac.inst().create());
 
-        AionTransaction tx2 = TransactionRlpCodec.decodeTransaction(tx.getEncoded());
+        AionTransaction tx2 =
+                TransactionRlpCodec.decodeTransaction(TransactionRlpCodec.getEncoding(tx));
 
         assertTransactionEquals(tx, tx2);
     }

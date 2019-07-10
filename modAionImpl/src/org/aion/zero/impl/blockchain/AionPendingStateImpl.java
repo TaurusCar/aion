@@ -484,7 +484,8 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock> {
                     addToTxCache(tx);
 
                     if (poolBackUp) {
-                        backupPendingCacheAdd.put(tx.getTransactionHash(), tx.getEncoded());
+                        backupPendingCacheAdd.put(
+                                tx.getTransactionHash(), TransactionRlpCodec.getEncoding(tx));
                     }
 
                     if (LOGGER_TX.isTraceEnabled()) {
@@ -509,7 +510,8 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock> {
                         addToTxCache(tx);
 
                         if (poolBackUp) {
-                            backupPendingCacheAdd.put(tx.getTransactionHash(), tx.getEncoded());
+                            backupPendingCacheAdd.put(
+                                    tx.getTransactionHash(), TransactionRlpCodec.getEncoding(tx));
                         }
 
                         if (LOGGER_TX.isTraceEnabled()) {
@@ -555,7 +557,9 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock> {
                             newPending.add(tx);
 
                             if (poolBackUp) {
-                                backupPendingPoolAdd.put(tx.getTransactionHash(), tx.getEncoded());
+                                backupPendingPoolAdd.put(
+                                        tx.getTransactionHash(),
+                                        TransactionRlpCodec.getEncoding(tx));
                             }
                         } else {
                             break;
@@ -583,7 +587,8 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock> {
                     txResponses.add(TxResponse.REPAID);
 
                     if (poolBackUp) {
-                        backupPendingPoolAdd.put(tx.getTransactionHash(), tx.getEncoded());
+                        backupPendingPoolAdd.put(
+                                tx.getTransactionHash(), TransactionRlpCodec.getEncoding(tx));
                     }
                 } else {
                     txResponses.add(implResponse);

@@ -5,18 +5,12 @@ import org.aion.crypto.ECKey;
 import org.aion.crypto.ECKey.MissingPrivateKeyException;
 import org.aion.crypto.HashUtil;
 import org.aion.crypto.ISignature;
-import org.aion.log.AionLoggerFactory;
-import org.aion.log.LogEnum;
-import org.aion.rlp.RLP;
 import org.aion.types.AionAddress;
 import org.aion.util.bytes.ByteUtil;
 import org.aion.util.time.TimeInstant;
-import org.slf4j.Logger;
 
 /** Aion transaction class. */
 public class AionTransaction implements Cloneable {
-
-    protected static final Logger LOG = AionLoggerFactory.getLogger(LogEnum.GEN.toString());
 
     /* the amount of ether to transfer (calculated as wei) */
     protected byte[] value;
@@ -142,11 +136,11 @@ public class AionTransaction implements Cloneable {
     }
 
     public byte[] getTransactionHash() {
-        return HashUtil.h256(this.getEncoded());
+        return HashUtil.h256(TransactionRlpCodec.getEncoding(this));
     }
 
     public byte[] getRawHash() {
-        byte[] plainMsg = this.getEncodedRaw();
+        byte[] plainMsg = TransactionRlpCodec.getEncodingNoSignature(this);
         return HashUtil.h256(plainMsg);
     }
 
@@ -208,7 +202,6 @@ public class AionTransaction implements Cloneable {
         try {
             return new AionAddress(HashUtil.calcNewAddr(from.toByteArray(), this.getNonce()));
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
             return null;
         }
     }
@@ -223,7 +216,6 @@ public class AionTransaction implements Cloneable {
         }
 
         if (this.signature == null) {
-            LOG.error("no signature!");
             return null;
         }
 
@@ -231,7 +223,6 @@ public class AionTransaction implements Cloneable {
             from = new AionAddress(this.signature.getAddress());
             return from;
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
             return null;
         }
     }
@@ -270,58 +261,6 @@ public class AionTransaction implements Cloneable {
                 + ", sig="
                 + ((signature == null) ? "null" : signature.toString())
                 + "]";
-    }
-
-    /** For signatures you have to keep also RLP of the transaction without any signature data */
-    private byte[] getEncodedRaw() {
-
-        byte[] nonce = RLP.encodeElement(this.nonce);
-
-        byte[] to;
-        if (this.to == null) {
-            to = RLP.encodeElement(null);
-        } else {
-            to = RLP.encodeElement(this.to.toByteArray());
-        }
-
-        byte[] value = RLP.encodeElement(this.value);
-        byte[] data = RLP.encodeElement(this.data);
-        byte[] timeStamp = RLP.encodeElement(this.timeStamp);
-        byte[] nrg = RLP.encodeLong(this.nrg);
-        byte[] nrgPrice = RLP.encodeLong(this.nrgPrice);
-        byte[] type = RLP.encodeByte(this.type);
-
-        return RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type);
-    }
-
-    public byte[] getEncoded() {
-
-        byte[] nonce = RLP.encodeElement(this.nonce);
-
-        byte[] to;
-        if (this.to == null) {
-            to = RLP.encodeElement(null);
-        } else {
-            to = RLP.encodeElement(this.to.toByteArray());
-        }
-
-        byte[] value = RLP.encodeElement(this.value);
-        byte[] data = RLP.encodeElement(this.data);
-        byte[] timeStamp = RLP.encodeElement(this.timeStamp);
-        byte[] nrg = RLP.encodeLong(this.nrg);
-        byte[] nrgPrice = RLP.encodeLong(this.nrgPrice);
-        byte[] type = RLP.encodeByte(this.type);
-
-        byte[] sigs;
-
-        if (signature == null) {
-            LOG.error("Encoded transaction has no signature!");
-            return null;
-        }
-
-        sigs = RLP.encodeElement(signature.toBytes());
-
-        return RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type, sigs);
     }
 
     @Override
