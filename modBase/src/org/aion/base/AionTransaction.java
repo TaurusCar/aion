@@ -59,6 +59,11 @@ public class AionTransaction implements Cloneable {
             byte[] data,
             long nrg,
             long nrgPrice) {
+
+        if (from == null) {
+            throw new IllegalArgumentException();
+        }
+
         this.nonce = nonce;
         this.to = destination;
         this.value = value;

@@ -115,7 +115,7 @@ public class Benchmark {
         long ownerNonce = repo.getNonce(owner).longValue();
 
         for (int i = 0; i < num; i++) {
-            byte[] recipient = RandomUtils.nextBytes(20);
+            byte[] recipient = RandomUtils.nextBytes(AionAddress.LENGTH);
             recipients.add(recipient);
 
             // transfer token to random people

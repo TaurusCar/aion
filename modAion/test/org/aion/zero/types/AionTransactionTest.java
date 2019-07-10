@@ -90,7 +90,7 @@ public class AionTransactionTest {
     @Test
     public void testTransactionCost() {
         byte[] nonce = DataWordImpl.ONE.getData();
-        byte[] from = RandomUtils.nextBytes(20);
+        byte[] from = RandomUtils.nextBytes(AionAddress.LENGTH);
         byte[] to = RandomUtils.nextBytes(AionAddress.LENGTH);
         byte[] value = DataWordImpl.ONE.getData();
         byte[] data = RandomUtils.nextBytes(128);
