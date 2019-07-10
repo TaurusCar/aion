@@ -70,7 +70,23 @@ public class TransactionRlpCodec {
 
     /** For signatures you have to keep also RLP of the transaction without any signature data */
     public static byte[] getEncodingNoSignature(AionTransaction tx) {
-        return getEncodingPrivate(tx, false);
+        byte[] nonce = RLP.encodeElement(tx.getNonce());
+
+        byte[] to;
+        if (tx.getDestinationAddress() == null) {
+            to = RLP.encodeElement(null);
+        } else {
+            to = RLP.encodeElement(tx.getDestinationAddress().toByteArray());
+        }
+
+        byte[] value = RLP.encodeElement(tx.getValue());
+        byte[] data = RLP.encodeElement(tx.getData());
+        byte[] timeStamp = RLP.encodeElement(null);
+        byte[] nrg = RLP.encodeLong(tx.getEnergyLimit());
+        byte[] nrgPrice = RLP.encodeLong(tx.getEnergyPrice());
+        byte[] type = RLP.encodeByte(tx.getTargetVM());
+
+        return RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type);
     }
 
     public static byte[] getEncoding(AionTransaction tx) {
