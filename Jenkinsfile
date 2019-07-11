@@ -43,12 +43,6 @@ pipeline {
         }
 
         stage('Functional tests') { 
-            when { 
-                // only run if:
-                // - this branch is in a PR (env.CHANGE_ID not null), or
-                // - this branch is master or master-pre-merge
-                expression { env.CHANGE_ID || GIT_BRANCH == 'master' || GIT_BRANCH == 'master-pre-merge' } 
-            }
             steps { 
                     dir('FunctionalTests') {
                         git url: 'https://github.com/aionnetwork/node_test_harness.git', branch: 'master' 
