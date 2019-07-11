@@ -470,10 +470,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -600,10 +600,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -654,10 +654,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -708,10 +708,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -760,10 +760,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -812,10 +812,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -862,10 +862,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -1061,10 +1061,10 @@ public class ApiAion0Test {
 
         AionTransaction tx =
                 new AionTransaction(
-                        AionRepositoryImpl.inst().getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        AionRepositoryImpl.inst().getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        val,
+                        new BigInteger(1, val),
                         msg,
                         1000,
                         5000);

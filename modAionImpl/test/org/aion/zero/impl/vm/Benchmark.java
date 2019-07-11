@@ -150,13 +150,11 @@ public class Benchmark {
         for (AionTransaction tx : txs) {
             assertNotNull(tx.getTransactionHash());
             assertEquals(32, tx.getTransactionHash().length);
-            assertNotNull(tx.getValue());
-            assertEquals(16, tx.getValue().length);
+            assertNotNull(tx.getValueBI());
             assertNotNull(tx.getData());
             assertNotNull(tx.getSenderAddress());
             assertNotNull(tx.getDestinationAddress());
-            assertNotNull(tx.getNonce());
-            assertEquals(16, tx.getNonce().length);
+            assertNotNull(tx.getNonceBI());
             assertTrue(tx.getEnergyLimit() > 0);
             assertTrue(tx.getEnergyPrice() > 0);
             assertTrue(

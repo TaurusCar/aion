@@ -358,14 +358,11 @@ public class InternalTransactionTest {
         ECKey deployerAccount = bundle.privateKeys.get(0);
 
         AionAddress firstContractAddr =
-                new AionAddress(
-                        HashUtil.calcNewAddr(
-                                deployerAccount.getAddress(), BigInteger.ONE.toByteArray()));
+                new AionAddress(HashUtil.calcNewAddr(deployerAccount.getAddress(), BigInteger.ONE));
 
         AionAddress internalContractAddress =
                 new AionAddress(
-                        HashUtil.calcNewAddr(
-                                firstContractAddr.toByteArray(), BigInteger.ZERO.toByteArray()));
+                        HashUtil.calcNewAddr(firstContractAddr.toByteArray(), BigInteger.ZERO));
 
         BigInteger nonce = BigInteger.ZERO;
 
@@ -458,7 +455,7 @@ public class InternalTransactionTest {
                                         new AionAddress(
                                                 HashUtil.calcNewAddr(
                                                         contractAddress.toByteArray(),
-                                                        BigInteger.ZERO.toByteArray()))));
+                                                        BigInteger.ZERO))));
 
                 firstItx = false;
             }

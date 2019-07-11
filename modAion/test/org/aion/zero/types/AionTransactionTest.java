@@ -3,6 +3,7 @@ package org.aion.zero.types;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+import java.math.BigInteger;
 import org.aion.base.AionTransaction;
 import org.aion.base.TransactionRlpCodec;
 import org.aion.base.TransactionUtil;
@@ -17,9 +18,9 @@ public class AionTransactionTest {
 
     private void assertTransactionEquals(AionTransaction tx, AionTransaction tx2) {
         assertArrayEquals(tx.getTransactionHash(), tx2.getTransactionHash());
-        assertArrayEquals(tx.getNonce(), tx2.getNonce());
-        assertArrayEquals(tx.getValue(), tx2.getValue());
         assertArrayEquals(tx.getData(), tx2.getData());
+        assertEquals(tx.getNonceBI(), tx2.getNonceBI());
+        assertEquals(tx.getValueBI(), tx2.getValueBI());
         assertEquals(tx.getEnergyLimit(), tx2.getEnergyLimit());
         assertEquals(tx.getEnergyPrice(), tx2.getEnergyPrice());
         assertEquals(tx.getTargetVM(), tx2.getTargetVM());
@@ -90,23 +91,20 @@ public class AionTransactionTest {
 
     @Test
     public void testTransactionCost() {
-        byte[] nonce = DataWordImpl.ONE.getData();
         byte[] from = RandomUtils.nextBytes(AionAddress.LENGTH);
         byte[] to = RandomUtils.nextBytes(AionAddress.LENGTH);
-        byte[] value = DataWordImpl.ONE.getData();
         byte[] data = RandomUtils.nextBytes(128);
         long nrg = new DataWordImpl(1000L).longValue();
-        long nrgPrice = DataWordImpl.ONE.longValue();
 
         AionTransaction tx =
                 new AionTransaction(
-                        nonce,
+                        BigInteger.ONE,
                         new AionAddress(from),
                         new AionAddress(to),
-                        value,
+                        BigInteger.ONE,
                         data,
                         nrg,
-                        nrgPrice);
+                        1L);
 
         long expected = 21000;
         for (byte b : data) {
@@ -117,16 +115,13 @@ public class AionTransactionTest {
 
     @Test
     public void testTransactionCost2() {
-        byte[] nonce = DataWordImpl.ONE.getData();
         byte[] from = RandomUtils.nextBytes(AionAddress.LENGTH);
-        AionAddress to = null;
-        byte[] value = DataWordImpl.ONE.getData();
         byte[] data = RandomUtils.nextBytes(128);
         long nrg = new DataWordImpl(1000L).longValue();
-        long nrgPrice = DataWordImpl.ONE.longValue();
 
         AionTransaction tx =
-                new AionTransaction(nonce, new AionAddress(from), to, value, data, nrg, nrgPrice);
+                new AionTransaction(
+                        BigInteger.ONE, new AionAddress(from), null, BigInteger.ONE, data, nrg, 1L);
 
         long expected = 200000 + 21000;
         for (byte b : data) {

@@ -922,10 +922,10 @@ public class AionAuctionContractTest {
             AionAddress destAddr = new AionAddress(HashUtil.h256(accountNonce.toByteArray()));
             AionTransaction sendTransaction =
                     new AionTransaction(
-                            accountNonce.toByteArray(),
+                            accountNonce,
                             new AionAddress(key.getAddress()),
                             destAddr,
-                            BigInteger.ONE.toByteArray(),
+                            BigInteger.ONE,
                             ZERO_BYTE,
                             21000,
                             1);

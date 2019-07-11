@@ -115,8 +115,10 @@ public final class TxRecpt {
         this.to = this.toAddr == null ? null : toJsonHex(this.toAddr.toByteArray());
 
         this.txTimeStamp = ByteUtil.byteArrayToLong(receipt.getTransaction().getTimestamp());
-        this.txValue = StringUtils.toJsonHex(txInfo.getReceipt().getTransaction().getValue());
-        this.txNonce = ByteUtil.byteArrayToLong(txInfo.getReceipt().getTransaction().getNonce());
+        this.txValue =
+                StringUtils.toJsonHex(
+                        txInfo.getReceipt().getTransaction().getValueBI().toByteArray());
+        this.txNonce = txInfo.getReceipt().getTransaction().getNonceBI().longValue();
         byte[] _txData = txInfo.getReceipt().getTransaction().getData();
         this.txData = _txData == null ? "" : toJsonHex(_txData);
 
@@ -166,8 +168,8 @@ public final class TxRecpt {
         this.to = this.toAddr == null ? null : toJsonHex(this.toAddr.toByteArray());
 
         this.txTimeStamp = ByteUtil.byteArrayToLong(tx.getTimestamp());
-        this.txValue = toJsonHex(tx.getValue());
-        this.txNonce = ByteUtil.byteArrayToLong(tx.getNonce());
+        this.txValue = toJsonHex(tx.getValueBI().toByteArray());
+        this.txNonce = tx.getNonceBI().longValue();
         this.txData = tx.getData() == null ? "" : toJsonHex(tx.getData());
         this.gasPrice = tx.getEnergyPrice();
         this.nrgLimit = tx.getEnergyLimit();

@@ -65,10 +65,10 @@ public class TxRecptLgTest {
         BigInteger nonce = BigInteger.ZERO;
         AionTransaction tx1 =
                 new AionTransaction(
-                        nonce.toByteArray(),
+                        nonce,
                         new AionAddress(deployerAccount.getAddress()),
                         null,
-                        new byte[0],
+                        BigInteger.ZERO,
                         ByteUtil.hexStringToBytes(contractA),
                         1_000_000L,
                         1L);
@@ -77,10 +77,10 @@ public class TxRecptLgTest {
         nonce = nonce.add(BigInteger.ONE);
         AionTransaction tx2 =
                 new AionTransaction(
-                        nonce.toByteArray(),
+                        nonce,
                         new AionAddress(deployerAccount.getAddress()),
                         null,
-                        new byte[0],
+                        BigInteger.ZERO,
                         ByteUtil.hexStringToBytes(contractB),
                         1_000_000L,
                         1L);
@@ -105,10 +105,10 @@ public class TxRecptLgTest {
         System.arraycopy(HashUtil.keccak256("AA(address)".getBytes()), 0, functionAA, 0, 4);
         AionTransaction tx3 =
                 new AionTransaction(
-                        nonce.toByteArray(),
+                        nonce,
                         new AionAddress(deployerAccount.getAddress()),
                         addressA,
-                        new byte[0],
+                        BigInteger.ZERO,
                         ByteUtil.merge(functionAA, addressB.toByteArray()),
                         1_000_000L,
                         1L);

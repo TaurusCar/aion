@@ -40,7 +40,7 @@ public class TXValidator {
     }
 
     public static boolean isValid0(AionTransaction tx) {
-        byte[] check = tx.getNonce();
+        byte[] check = tx.getNonceBI().toByteArray();
         if (check == null || check.length > DataWordImpl.BYTES) {
             LOG.error("invalid tx nonce!");
             return false;
@@ -52,7 +52,7 @@ public class TXValidator {
             return false;
         }
 
-        check = tx.getValue();
+        check = tx.getValueBI().toByteArray();
         if (check == null || check.length > DataWordImpl.BYTES) {
             LOG.error("invalid tx value!");
             return false;

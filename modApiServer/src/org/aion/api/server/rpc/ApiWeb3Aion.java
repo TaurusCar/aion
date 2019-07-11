@@ -692,7 +692,7 @@ public class ApiWeb3Aion extends ApiAion {
             obj.put("raw", StringUtils.toJsonHex(TransactionRlpCodec.getEncoding(tx)));
 
             JSONObject txObj = new JSONObject();
-            txObj.put("nonce", StringUtils.toJsonHex(tx.getNonce()));
+            txObj.put("nonce", StringUtils.toJsonHex(tx.getNonceBI().toByteArray()));
             txObj.put("gasPrice", StringUtils.toJsonHex(tx.getEnergyPrice()));
             txObj.put("nrgPrice", StringUtils.toJsonHex(tx.getEnergyPrice()));
             txObj.put("gas", StringUtils.toJsonHex(tx.getEnergyLimit()));
@@ -703,7 +703,7 @@ public class ApiWeb3Aion extends ApiAion {
                             tx.getDestinationAddress() == null
                                     ? EMPTY_BYTE_ARRAY
                                     : tx.getDestinationAddress().toByteArray()));
-            txObj.put("value", StringUtils.toJsonHex(tx.getValue()));
+            txObj.put("value", StringUtils.toJsonHex(tx.getValueBI().toByteArray()));
             txObj.put("input", StringUtils.toJsonHex(tx.getData()));
             txObj.put("hash", StringUtils.toJsonHex(tx.getTransactionHash()));
 
@@ -817,10 +817,10 @@ public class ApiWeb3Aion extends ApiAion {
 
         AionTransaction tx =
                 new AionTransaction(
-                        txParams.getNonce().toByteArray(),
+                        txParams.getNonce(),
                         sender,
                         txParams.getTo(),
-                        txParams.getValue().toByteArray(),
+                        txParams.getValue(),
                         txParams.getData(),
                         txParams.getNrg(),
                         txParams.getNrgPrice());
@@ -2204,7 +2204,7 @@ public class ApiWeb3Aion extends ApiAion {
         result.put("transactionHash", StringUtils.toJsonHex(tx.getTransactionHash()));
         result.put("blockNumber", block.getNumber());
         result.put("blockHash", StringUtils.toJsonHex(block.getHash()));
-        result.put("nonce", StringUtils.toJsonHex(tx.getNonce()));
+        result.put("nonce", StringUtils.toJsonHex(tx.getNonceBI().toByteArray()));
         result.put("fromAddr", StringUtils.toJsonHex(tx.getSenderAddress().toByteArray()));
         result.put(
                 "toAddr",
@@ -2212,7 +2212,7 @@ public class ApiWeb3Aion extends ApiAion {
                         tx.getDestinationAddress() == null
                                 ? EMPTY_BYTE_ARRAY
                                 : tx.getDestinationAddress().toByteArray()));
-        result.put("value", StringUtils.toJsonHex(tx.getValue()));
+        result.put("value", StringUtils.toJsonHex(tx.getValueBI().toByteArray()));
         result.put("nrgPrice", tx.getEnergyPrice());
         result.put("nrgConsumed", txInfo.getReceipt().getEnergyUsed());
         result.put("data", StringUtils.toJsonHex(tx.getData()));
@@ -2333,7 +2333,7 @@ public class ApiWeb3Aion extends ApiAion {
                                 tx.getDestinationAddress() == null
                                         ? EMPTY_BYTE_ARRAY
                                         : tx.getDestinationAddress().toByteArray()));
-                t.put(StringUtils.toJsonHex(tx.getValue()));
+                t.put(StringUtils.toJsonHex(tx.getValueBI().toByteArray()));
                 t.put(block.getTimestamp());
                 t.put(block.getNumber());
 

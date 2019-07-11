@@ -31,7 +31,7 @@ public class TransactionUtil {
             return null;
         }
         return new AionAddress(
-                HashUtil.calcNewAddr(tx.getSenderAddress().toByteArray(), tx.getNonce()));
+                HashUtil.calcNewAddr(tx.getSenderAddress().toByteArray(), tx.getNonceBI()));
     }
 
     public static byte[] hashWithoutSignature(AionTransaction tx) {

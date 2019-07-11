@@ -1,7 +1,6 @@
 package org.aion.zero.types;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import org.aion.base.AionTransaction;
 import org.aion.base.TransactionRlpCodec;
 import org.aion.mcf.blockchain.AbstractPendingTx;
@@ -45,6 +44,6 @@ public class AionPendingTx extends AbstractPendingTx {
         AionPendingTx that = (AionPendingTx) o;
 
         return getSender().equals(that.getSender())
-                && Arrays.equals(transaction.getNonce(), that.getTransaction().getNonce());
+                && transaction.getNonceBI().equals(that.getTransaction().getNonceBI());
     }
 }

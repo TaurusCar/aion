@@ -79,10 +79,10 @@ public class ApiAionTest {
             EventTx pendingRcvd = new EventTx(EventTx.CALLBACK.PENDINGTXRECEIVED0);
             AionTransaction tx =
                     new AionTransaction(
-                            new byte[0],
+                            BigInteger.ZERO,
                             new AionAddress(new byte[32]),
                             new AionAddress(new byte[32]),
-                            new byte[0],
+                            BigInteger.ZERO,
                             new byte[0],
                             0L,
                             1L);
@@ -280,10 +280,10 @@ public class ApiAionTest {
         byte[] msg = "test message".getBytes();
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         AddressUtils.ZERO_ADDRESS,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -325,10 +325,10 @@ public class ApiAionTest {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         addr,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);
@@ -357,10 +357,10 @@ public class ApiAionTest {
 
         AionTransaction tx =
                 new AionTransaction(
-                        repo.getNonce(AddressUtils.ZERO_ADDRESS).toByteArray(),
+                        repo.getNonce(AddressUtils.ZERO_ADDRESS),
                         addr,
                         AddressUtils.ZERO_ADDRESS,
-                        BigInteger.ONE.toByteArray(),
+                        BigInteger.ONE,
                         msg,
                         100000,
                         100000);

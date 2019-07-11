@@ -69,6 +69,6 @@ public abstract class AbstractPendingTx {
     @Override
     public int hashCode() {
         return ByteUtil.byteArrayToInt(getSender().toByteArray())
-                + ByteUtil.byteArrayToInt(transaction.getNonce());
+                + transaction.getNonceBI().intValue();
     }
 }

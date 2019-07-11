@@ -48,7 +48,6 @@ import org.aion.txpool.Constant;
 import org.aion.txpool.ITxPool;
 import org.aion.txpool.TxPoolModule;
 import org.aion.types.AionAddress;
-import org.aion.util.bytes.ByteUtil;
 import org.aion.util.conversions.Hex;
 import org.aion.vm.BulkExecutor;
 import org.aion.vm.exception.VMException;
@@ -79,12 +78,10 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock> {
         public TransactionSortedSet() {
             super(
                     (tx1, tx2) -> {
-                        long nonceDiff =
-                                ByteUtil.byteArrayToLong(tx1.getNonce())
-                                        - ByteUtil.byteArrayToLong(tx2.getNonce());
+                        BigInteger nonceDiff = tx1.getNonceBI().subtract(tx2.getNonceBI());
 
-                        if (nonceDiff != 0) {
-                            return nonceDiff > 0 ? 1 : -1;
+                        if (!nonceDiff.equals(BigInteger.ZERO)) {
+                            return nonceDiff.signum();
                         }
                         return Arrays.compare(tx1.getTransactionHash(), tx2.getTransactionHash());
                     });
@@ -672,7 +669,7 @@ public class AionPendingStateImpl implements IPendingStateInternal<AionBlock> {
                                     .getSenderAddress()
                                     .toString()
                                     .substring(0, 8),
-                            ByteUtil.byteArrayToLong(txReceipt.getTransaction().getNonce()),
+                            txReceipt.getTransaction().getNonceBI().longValue(),
                             block.getShortDescr(),
                             txReceipt.getError()));
         }

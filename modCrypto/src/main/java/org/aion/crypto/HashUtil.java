@@ -258,12 +258,12 @@ public class HashUtil {
     }
 
     /** Calculates the address as per the QA2 definitions */
-    public static byte[] calcNewAddr(byte[] addr, byte[] nonce) {
+    public static byte[] calcNewAddr(byte[] addr, BigInteger nonce) {
         ByteBuffer buf = ByteBuffer.allocate(32);
         buf.put(AddressSpecs.A0_IDENTIFIER);
 
         byte[] encSender = RLP.encodeElement(addr);
-        byte[] encNonce = RLP.encodeBigInteger(new BigInteger(1, nonce));
+        byte[] encNonce = RLP.encodeBigInteger(nonce);
 
         buf.put(h256(RLP.encodeList(encSender, encNonce)), 1, 31);
         return buf.array();

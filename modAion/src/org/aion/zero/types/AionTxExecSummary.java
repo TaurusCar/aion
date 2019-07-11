@@ -4,7 +4,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableMap;
-import static org.aion.util.biginteger.BIUtil.toBI;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 
@@ -60,7 +59,7 @@ public class AionTxExecSummary implements TxExecSummary {
     public AionTxExecSummary(AionTxReceipt receipt) {
         this.parsed = true;
         this.receipt = receipt;
-        this.value = toBI(this.getReceipt().getTransaction().getValue());
+        this.value = this.getReceipt().getTransaction().getValueBI();
     }
 
     public AionTxExecSummary(byte[] rlpEncoded) {

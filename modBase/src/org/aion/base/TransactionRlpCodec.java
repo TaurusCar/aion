@@ -8,6 +8,7 @@ import org.aion.log.LogEnum;
 import org.aion.rlp.RLP;
 import org.aion.rlp.RLPList;
 import org.aion.types.AionAddress;
+import org.aion.util.bytes.ByteUtil;
 import org.slf4j.Logger;
 
 public class TransactionRlpCodec {
@@ -70,23 +71,7 @@ public class TransactionRlpCodec {
 
     /** For signatures you have to keep also RLP of the transaction without any signature data */
     public static byte[] getEncodingNoSignature(AionTransaction tx) {
-        byte[] nonce = RLP.encodeElement(tx.getNonce());
-
-        byte[] to;
-        if (tx.getDestinationAddress() == null) {
-            to = RLP.encodeElement(null);
-        } else {
-            to = RLP.encodeElement(tx.getDestinationAddress().toByteArray());
-        }
-
-        byte[] value = RLP.encodeElement(tx.getValue());
-        byte[] data = RLP.encodeElement(tx.getData());
-        byte[] timeStamp = RLP.encodeElement(null);
-        byte[] nrg = RLP.encodeLong(tx.getEnergyLimit());
-        byte[] nrgPrice = RLP.encodeLong(tx.getEnergyPrice());
-        byte[] type = RLP.encodeByte(tx.getTargetVM());
-
-        return RLP.encodeList(nonce, to, value, data, timeStamp, nrg, nrgPrice, type);
+        return getEncodingPrivate(tx, false);
     }
 
     public static byte[] getEncoding(AionTransaction tx) {
@@ -95,7 +80,7 @@ public class TransactionRlpCodec {
 
     private static byte[] getEncodingPrivate(AionTransaction tx, boolean withSignature) {
 
-        byte[] nonce = RLP.encodeElement(tx.getNonce());
+        byte[] nonce = RLP.encodeElement(tx.getNonceBI().toByteArray());
 
         byte[] to;
         if (tx.getDestinationAddress() == null) {
@@ -104,7 +89,7 @@ public class TransactionRlpCodec {
             to = RLP.encodeElement(tx.getDestinationAddress().toByteArray());
         }
 
-        byte[] value = RLP.encodeElement(tx.getValue());
+        byte[] value = RLP.encodeElement(ByteUtil.bigIntegerToBytes(tx.getValueBI()));
         byte[] data = RLP.encodeElement(tx.getData());
         byte[] timeStamp = RLP.encodeElement(tx.getTimestamp());
         byte[] nrg = RLP.encodeLong(tx.getEnergyLimit());
