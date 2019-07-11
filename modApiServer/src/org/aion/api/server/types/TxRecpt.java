@@ -169,7 +169,7 @@ public final class TxRecpt {
 
         this.txTimeStamp = ByteUtil.byteArrayToLong(tx.getTimestamp());
         this.txValue = toJsonHex(tx.getValueBI().toByteArray());
-        this.txNonce = tx.getNonceBI().longValue();
+        this.txNonce = ByteUtil.byteArrayToLong(tx.getNonceBI().toByteArray());
         this.txData = tx.getData() == null ? "" : toJsonHex(tx.getData());
         this.gasPrice = tx.getEnergyPrice();
         this.nrgLimit = tx.getEnergyLimit();

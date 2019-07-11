@@ -7,6 +7,7 @@ import java.util.List;
 import org.aion.base.AionTransaction;
 import org.aion.base.TransactionUtil;
 import org.aion.types.AionAddress;
+import org.aion.util.bytes.ByteUtil;
 import org.aion.util.string.StringUtils;
 import org.aion.zero.impl.types.AionBlock;
 import org.json.JSONArray;
@@ -70,7 +71,7 @@ public class Blk {
                 jsonTx.put("nrgPrice", StringUtils.toJsonHex(tx.getEnergyPrice()));
                 jsonTx.put("gas", tx.getEnergyLimit());
                 jsonTx.put("gasPrice", StringUtils.toJsonHex(tx.getEnergyPrice()));
-                jsonTx.put("nonce", tx.getNonceBI().longValue());
+                jsonTx.put("nonce", ByteUtil.byteArrayToLong(tx.getNonceBI().toByteArray()));
                 jsonTx.put("from", StringUtils.toJsonHex(tx.getSenderAddress().toString()));
                 jsonTx.put(
                         "to",

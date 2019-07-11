@@ -49,6 +49,12 @@ public class AionTransaction implements Cloneable {
         if (nonce == null) {
             throw new IllegalArgumentException();
         }
+        if (value.compareTo(BigInteger.ZERO) < 0) {
+            throw new IllegalArgumentException("Negative value");
+        }
+        if (nonce.compareTo(BigInteger.ZERO) < 0) {
+            throw new IllegalArgumentException("Negative nonce");
+        }
 
         this.nonce = nonce;
         this.destinationAddress = destinationAddress;

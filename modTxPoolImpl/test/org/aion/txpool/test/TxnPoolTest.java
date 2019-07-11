@@ -73,7 +73,7 @@ public class TxnPoolTest {
         (txnl.get(0)).sign(key.get(0));
         tp.add(txnl);
 
-        assertTrue(tp.size() == 1);
+        Assert.assertEquals(1, tp.size());
     }
 
     private List<AionTransaction> getMockTransaction() {
@@ -98,13 +98,13 @@ public class TxnPoolTest {
         List<AionTransaction> txnl = getMockTransaction();
         (txnl.get(0)).sign(key.get(0));
         tp.add(txnl);
-        assertTrue(tp.size() == 1);
+        Assert.assertEquals(1, tp.size());
 
         // must snapshot the insert transaction before remove
         tp.snapshot();
 
         tp.remove(txnl);
-        assertTrue(tp.size() == 0);
+        Assert.assertEquals(0, tp.size());
     }
 
     @Test
@@ -127,14 +127,14 @@ public class TxnPoolTest {
         }
 
         List rtn = tp.add(txl);
-        assertTrue(rtn.size() == txl.size());
+        Assert.assertEquals(rtn.size(), txl.size());
 
         txl = tp.snapshot();
-        assertTrue(txl.size() == cnt);
+        Assert.assertEquals(txl.size(), cnt);
 
         rtn = tp.remove(txlrm);
-        assertTrue(rtn.size() == 10);
-        assertTrue(tp.size() == 10);
+        Assert.assertEquals(10, rtn.size());
+        Assert.assertEquals(10, tp.size());
     }
 
     @Test
@@ -157,16 +157,16 @@ public class TxnPoolTest {
         }
 
         List rtn = tp.add(txl);
-        assertTrue(rtn.size() == txl.size());
+        Assert.assertEquals(rtn.size(), txl.size());
 
         txl = tp.snapshot();
-        assertTrue(txl.size() == cnt);
+        Assert.assertEquals(txl.size(), cnt);
 
         Map<AionAddress, BigInteger> account = new HashMap<>();
         account.put(txl.get(0).getSenderAddress(), BigInteger.valueOf(10));
         rtn = tp.remove(account);
-        assertTrue(rtn.size() == 10);
-        assertTrue(tp.size() == 10);
+        Assert.assertEquals(10, rtn.size());
+        Assert.assertEquals(10, tp.size());
     }
 
     private AionTransaction genTransaction(BigInteger nonce) {
@@ -219,7 +219,7 @@ public class TxnPoolTest {
         Thread.sleep(10999);
 
         tp.snapshot();
-        assertTrue(tp.size() == 0);
+        Assert.assertEquals(0, tp.size());
     }
 
     @Test
@@ -236,7 +236,7 @@ public class TxnPoolTest {
         Thread.sleep(8999);
 
         tp.snapshot();
-        assertTrue(tp.size() == 1);
+        Assert.assertEquals(1, tp.size());
     }
 
     @Test
@@ -250,7 +250,7 @@ public class TxnPoolTest {
         tp.add(txnl);
 
         tp.snapshot();
-        assertTrue(tp.size() == 1);
+        Assert.assertEquals(1, tp.size());
     }
 
     @Test
@@ -269,10 +269,10 @@ public class TxnPoolTest {
         }
 
         List rtn = tp.add(txl);
-        assertTrue(rtn.size() == txl.size());
+        Assert.assertEquals(rtn.size(), txl.size());
 
         txl = tp.snapshot();
-        assertTrue(txl.size() == cnt);
+        Assert.assertEquals(txl.size(), cnt);
     }
 
     @Test
@@ -293,14 +293,14 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
 
         long nonce = 0;
         for (AionTransaction tx : txl) {
-            assertTrue(tx.getNonceBI().longValue() == nonce++);
+            Assert.assertEquals(tx.getNonceBI().longValue(), nonce++);
         }
     }
 
@@ -321,14 +321,14 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
 
         long nonce = 0;
         for (AionTransaction tx : txl) {
-            assertTrue(tx.getNonceBI().longValue() == nonce++);
+            Assert.assertEquals(tx.getNonceBI().longValue(), nonce++);
         }
     }
 
@@ -350,16 +350,16 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         long nonce = 0;
         for (AionTransaction tx : txl) {
-            assertTrue(tx.getNonceBI().longValue() == nonce++);
+            Assert.assertEquals(tx.getNonceBI().longValue(), nonce++);
         }
     }
 
@@ -383,16 +383,16 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         long nonce = 0;
         for (AionTransaction tx : txl) {
-            assertTrue(tx.getNonceBI().longValue() == nonce++);
+            Assert.assertEquals(tx.getNonceBI().longValue(), nonce++);
         }
     }
 
@@ -417,16 +417,16 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         long nonce = 0;
         for (AionTransaction tx : txl) {
-            assertTrue(tx.getNonceBI().longValue() == nonce++);
+            Assert.assertEquals(tx.getNonceBI().longValue(), nonce++);
         }
     }
 
@@ -451,16 +451,16 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         long nonce = 0;
         for (AionTransaction tx : txl) {
-            assertTrue(tx.getNonceBI().longValue() == nonce++);
+            Assert.assertEquals(tx.getNonceBI().longValue(), nonce++);
         }
     }
 
@@ -486,7 +486,7 @@ public class TxnPoolTest {
             txMap.put(ByteArrayWrapper.wrap(txn.getTransactionHash()), txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         List<AionTransaction> txnl2 = new ArrayList<>();
         for (int i = 0; i < cnt; i++) {
@@ -500,12 +500,12 @@ public class TxnPoolTest {
             txMap.put(ByteArrayWrapper.wrap(txn.getTransactionHash()), txn);
         }
         tp.add(txnl2);
-        assertTrue(tp.size() == cnt * 2);
+        Assert.assertEquals(tp.size(), cnt * 2);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         for (AionTransaction tx : txl) {
             assertTrue(txMap.containsKey(ByteArrayWrapper.wrap(tx.getTransactionHash())));
@@ -568,12 +568,12 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == cnt * 4);
+        Assert.assertEquals(tp.size(), cnt * 4);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         for (AionTransaction tx : txl) {
             assertTrue(txMap.containsKey(ByteArrayWrapper.wrap(tx.getTransactionHash())));
@@ -636,12 +636,12 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == cnt * 4);
+        Assert.assertEquals(tp.size(), cnt * 4);
 
         // sort the inserted txs
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(tp.size() == txl.size());
-        assertTrue(tp.snapshotAll().size() == txl.size());
+        Assert.assertEquals(tp.size(), txl.size());
+        Assert.assertEquals(tp.snapshotAll().size(), txl.size());
 
         for (AionTransaction tx : txl) {
             assertTrue(txMap.containsKey(ByteArrayWrapper.wrap(tx.getTransactionHash())));
@@ -672,7 +672,7 @@ public class TxnPoolTest {
         txnl.add(txn);
         tp.add(txnl);
 
-        assertTrue(tp.size() == 1);
+        Assert.assertEquals(1, tp.size());
     }
 
     @Test
@@ -693,7 +693,7 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         AionTransaction txn = genTransaction(BigInteger.valueOf(5));
         txn.sign(key.get(0));
@@ -701,9 +701,9 @@ public class TxnPoolTest {
         tp.add(txn);
 
         List<AionTransaction> snapshot = tp.snapshot();
-        assertTrue(snapshot.size() == cnt);
+        Assert.assertEquals(snapshot.size(), cnt);
 
-        assertTrue(snapshot.get(5).equals(txn));
+        Assert.assertEquals(snapshot.get(5), txn);
     }
 
     @Test
@@ -725,7 +725,7 @@ public class TxnPoolTest {
 
         tp.add(txnl);
         tp.snapshot();
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         AionTransaction txn = genTransaction(BigInteger.valueOf(5));
         txn.sign(key.get(0));
@@ -733,9 +733,9 @@ public class TxnPoolTest {
         tp.add(txn);
 
         List<AionTransaction> snapshot = tp.snapshot();
-        assertTrue(snapshot.size() == cnt);
+        Assert.assertEquals(snapshot.size(), cnt);
 
-        assertTrue(snapshot.get(5).equals(txn));
+        Assert.assertEquals(snapshot.get(5), txn);
     }
 
     @Test
@@ -759,11 +759,11 @@ public class TxnPoolTest {
 
         tp.add(txnl);
 
-        assertTrue(tp.size() == 1);
+        Assert.assertEquals(1, tp.size());
 
         List<AionTransaction> txl = tp.snapshot();
-        assertTrue(txl.size() == 1);
-        assertTrue(new BigInteger(txl.get(0).getTimestamp()).longValue() == t);
+        Assert.assertEquals(1, txl.size());
+        Assert.assertEquals(new BigInteger(txl.get(0).getTimestamp()).longValue(), t);
     }
 
     @Test
@@ -796,7 +796,7 @@ public class TxnPoolTest {
         }
         tp.add(txnl);
 
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         tp.snapshot();
@@ -804,7 +804,7 @@ public class TxnPoolTest {
         List<BigInteger> nl = tp.getNonceList(acc);
 
         for (int i = 0; i < cnt; i++) {
-            assertTrue(nl.get(i).equals(BigInteger.valueOf(i + 1)));
+            Assert.assertEquals(nl.get(i), BigInteger.valueOf(i + 1));
         }
     }
 
@@ -840,7 +840,7 @@ public class TxnPoolTest {
 
         tp.add(txnl);
 
-        assertTrue(tp.size() == cnt * key.size());
+        Assert.assertEquals(tp.size(), cnt * key.size());
 
         // sort the inserted txs
         tp.snapshot();
@@ -848,7 +848,7 @@ public class TxnPoolTest {
         for (ECKey aKey : key) {
             List<BigInteger> nl = tp.getNonceList(new AionAddress(aKey.getAddress()));
             for (int i = 0; i < cnt; i++) {
-                assertTrue(nl.get(i).equals(BigInteger.valueOf(i + 1)));
+                Assert.assertEquals(nl.get(i), BigInteger.valueOf(i + 1));
             }
         }
     }
@@ -884,7 +884,7 @@ public class TxnPoolTest {
         }
         tp.add(txnl);
 
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         tp.snapshot();
@@ -893,7 +893,7 @@ public class TxnPoolTest {
 
         long val = 100;
         for (int i = 0; i < cnt; i++) {
-            assertTrue(nl.get(i).compareTo(BigInteger.valueOf(val--)) == 0);
+            Assert.assertEquals(0, nl.get(i).compareTo(BigInteger.valueOf(val--)));
         }
     }
 
@@ -915,15 +915,15 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         tp.snapshot();
 
         List<BigInteger> nl = tp.getFeeList();
 
-        assertTrue(nl.size() == 1);
-        assertTrue(nl.get(0).compareTo(BigInteger.valueOf(55 / 10)) == 0);
+        Assert.assertEquals(1, nl.size());
+        Assert.assertEquals(0, nl.get(0).compareTo(BigInteger.valueOf(55 / 10)));
     }
 
     @Test
@@ -943,16 +943,16 @@ public class TxnPoolTest {
             txnl.add(txn);
         }
         tp.add(txnl);
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         tp.snapshot();
 
         List<BigInteger> nl = tp.getFeeList();
 
-        assertTrue(nl.size() == 2);
-        assertTrue(nl.get(0).compareTo(BigInteger.valueOf(17)) == 0);
-        assertTrue(nl.get(1).compareTo(BigInteger.valueOf(136 / 16)) == 0);
+        Assert.assertEquals(2, nl.size());
+        Assert.assertEquals(0, nl.get(0).compareTo(BigInteger.valueOf(17)));
+        Assert.assertEquals(0, nl.get(1).compareTo(BigInteger.valueOf(136 / 16)));
     }
 
     @Test
@@ -986,7 +986,7 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == cnt * key.size());
+        Assert.assertEquals(tp.size(), cnt * key.size());
 
         // sort the inserted txs
         long start = System.currentTimeMillis();
@@ -996,7 +996,7 @@ public class TxnPoolTest {
         for (ECKey aKey : key) {
             List<BigInteger> nl = tp.getNonceList(new AionAddress(aKey.getAddress()));
             for (int i = 0; i < cnt; i++) {
-                assertTrue(nl.get(i).equals(BigInteger.valueOf(i)));
+                Assert.assertEquals(nl.get(i), BigInteger.valueOf(i));
             }
         }
     }
@@ -1033,7 +1033,7 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == cnt * key.size());
+        Assert.assertEquals(tp.size(), cnt * key.size());
 
         // sort the inserted txs
         long start = System.currentTimeMillis();
@@ -1061,7 +1061,7 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == (cnt + cnt2) * key.size());
+        Assert.assertEquals(tp.size(), (cnt + cnt2) * key.size());
 
         start = System.currentTimeMillis();
         tp.snapshot();
@@ -1070,7 +1070,7 @@ public class TxnPoolTest {
         for (ECKey aKey : key) {
             List<BigInteger> nl = tp.getNonceList(new AionAddress(aKey.getAddress()));
             for (int i = 0; i < cnt + cnt2; i++) {
-                assertTrue(nl.get(i).equals(BigInteger.valueOf(i)));
+                Assert.assertEquals(nl.get(i), BigInteger.valueOf(i));
             }
         }
     }
@@ -1116,7 +1116,7 @@ public class TxnPoolTest {
         tp.add(txnl);
         System.out.println("time spent: " + (System.currentTimeMillis() - start) + " ms.");
 
-        assertTrue(tp.size() == cnt * key2.size());
+        Assert.assertEquals(tp.size(), cnt * key2.size());
 
         // sort the inserted txs
         System.out.println("Snapshoting --");
@@ -1127,7 +1127,7 @@ public class TxnPoolTest {
         for (ECKey aKey2 : key2) {
             List<BigInteger> nl = tp.getNonceList(new AionAddress(aKey2.getAddress()));
             for (int i = 0; i < cnt; i++) {
-                assertTrue(nl.get(i).equals(BigInteger.valueOf(i)));
+                Assert.assertEquals(nl.get(i), BigInteger.valueOf(i));
             }
         }
     }
@@ -1172,7 +1172,7 @@ public class TxnPoolTest {
         start = System.currentTimeMillis();
         tp.add(txnl);
         System.out.println("time spent: " + (System.currentTimeMillis() - start) + " ms.");
-        assertTrue(tp.size() == cnt);
+        Assert.assertEquals(tp.size(), cnt);
 
         // sort the inserted txs
         System.out.println("Snapshoting...");
@@ -1184,8 +1184,8 @@ public class TxnPoolTest {
         start = System.currentTimeMillis();
         List rm = tp.remove(txnlrm);
         System.out.println("time spent: " + (System.currentTimeMillis() - start) + " ms.");
-        assertTrue(rm.size() == rmCnt);
-        assertTrue(tp.size() == cnt - rmCnt);
+        Assert.assertEquals(rm.size(), rmCnt);
+        Assert.assertEquals(tp.size(), cnt - rmCnt);
 
         System.out.println("Re-Snapshot after some txns was been removed...");
         start = System.currentTimeMillis();
@@ -1194,7 +1194,7 @@ public class TxnPoolTest {
 
         List<BigInteger> nl = tp.getNonceList(new AionAddress(key.get(0).getAddress()));
         for (int i = 0; i < nl.size(); i++) {
-            assertTrue(nl.get(i).equals(BigInteger.valueOf(i).add(BigInteger.valueOf(rmCnt))));
+            Assert.assertEquals(nl.get(i), BigInteger.valueOf(i).add(BigInteger.valueOf(rmCnt)));
         }
     }
 
@@ -1230,7 +1230,7 @@ public class TxnPoolTest {
         }
 
         tp.add(txnl);
-        assertTrue(tp.size() == cnt * key.size());
+        Assert.assertEquals(tp.size(), cnt * key.size());
 
         // sort the inserted txs
         System.out.println("1st time snapshot...");
@@ -1246,7 +1246,7 @@ public class TxnPoolTest {
         for (ECKey aKey : key) {
             List<BigInteger> nl = tp.getNonceList(new AionAddress(aKey.getAddress()));
             for (int i = 0; i < cnt; i++) {
-                assertTrue(nl.get(i).equals(BigInteger.valueOf(i)));
+                Assert.assertEquals(nl.get(i), BigInteger.valueOf(i));
             }
         }
     }

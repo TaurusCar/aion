@@ -5,6 +5,7 @@ import static org.aion.util.bytes.ByteUtil.EMPTY_BYTE_ARRAY;
 import org.aion.base.AionTransaction;
 import org.aion.base.TransactionUtil;
 import org.aion.types.AionAddress;
+import org.aion.util.bytes.ByteUtil;
 import org.aion.util.string.StringUtils;
 import org.aion.zero.impl.types.AionBlock;
 import org.aion.zero.impl.types.AionTxInfo;
@@ -48,7 +49,7 @@ public class Tx {
         json.put("nrgPrice", StringUtils.toJsonHex(tx.getEnergyPrice()));
         json.put("gas", tx.getEnergyLimit());
         json.put("gasPrice", StringUtils.toJsonHex(tx.getEnergyPrice()));
-        json.put("nonce", tx.getNonceBI().longValue());
+        json.put("nonce", ByteUtil.byteArrayToLong(tx.getNonceBI().toByteArray()));
         json.put("from", StringUtils.toJsonHex(tx.getSenderAddress().toString()));
         json.put(
                 "to",
