@@ -42,12 +42,12 @@ pipeline {
             }
         }
 
-        stage('Functional tests') { 
-            when { 
+        stage('Functional tests') {
+            when {
                 // only run if:
                 // - this branch is in a PR (env.CHANGE_ID not null), or
                 // - this branch is master or master-pre-merge
-                expression { env.CHANGE_ID || GIT_BRANCH == 'master' || GIT_BRANCH == 'master-pre-merge' } 
+                expression { env.CHANGE_ID || GIT_BRANCH == 'master' || GIT_BRANCH == 'master-pre-merge' }
             }
             steps { 
                     dir('FunctionalTests') {
