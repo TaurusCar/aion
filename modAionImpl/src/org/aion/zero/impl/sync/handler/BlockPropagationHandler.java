@@ -3,12 +3,12 @@ package org.aion.zero.impl.sync.handler;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.aion.mcf.valid.BlockHeaderValidatorNew;
 import org.aion.vm.api.types.ByteArrayWrapper;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.mcf.blockchain.IPendingStateInternal;
 import org.aion.mcf.core.ImportResult;
-import org.aion.mcf.valid.BlockHeaderValidator;
 import org.aion.p2p.IP2pMgr;
 import org.aion.zero.impl.config.CfgAion;
 import org.aion.zero.impl.core.IAionBlockchain;
@@ -17,7 +17,6 @@ import org.aion.zero.impl.sync.msg.BroadcastNewBlock;
 import org.aion.zero.impl.sync.msg.ResStatus;
 import org.aion.zero.impl.sync.statistics.BlockType;
 import org.aion.zero.impl.types.AionPoSBlock;
-import org.aion.zero.types.StakedBlockHeader;
 import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 
@@ -45,7 +44,7 @@ public class BlockPropagationHandler {
 
     private final IP2pMgr p2pManager;
 
-    private final BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator;
+    private final BlockHeaderValidatorNew blockHeaderValidator;
 
     private static final Logger log = AionLoggerFactory.getLogger(LogEnum.SYNC.name());
 
@@ -62,7 +61,7 @@ public class BlockPropagationHandler {
             final IAionBlockchain blockchain,
             final SyncStats syncStats,
             final IP2pMgr p2pManager,
-            BlockHeaderValidator<StakedBlockHeader> headerValidator,
+            BlockHeaderValidatorNew headerValidator,
             final boolean isSyncOnlyNode,
             final byte apiVersion,
             final IPendingStateInternal pendingState) {

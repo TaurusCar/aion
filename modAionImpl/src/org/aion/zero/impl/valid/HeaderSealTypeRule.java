@@ -1,18 +1,19 @@
 package org.aion.zero.impl.valid;
 
 import java.util.List;
-import org.aion.mcf.blockchain.valid.BlockHeaderRule;
-import org.aion.mcf.types.AbstractBlockHeader;
+import org.aion.interfaces.block.BlockHeader;
+import org.aion.mcf.blockchain.valid.BlockHeaderRuleInterface;
 import org.aion.zero.types.BlockHeaderSealType;
+import org.aion.zero.types.StakedBlockHeader;
 
-public class HeaderSealTypeRule<H extends AbstractBlockHeader> extends BlockHeaderRule<H> {
+public class HeaderSealTypeRule implements BlockHeaderRuleInterface {
 
     @Override
-    public boolean validate(H header, List<RuleError> errors) {
-        if (!BlockHeaderSealType.isActive(header.getSealType())) {
+    public boolean validate(BlockHeader header, List<RuleError> errors) {
+        if (!BlockHeaderSealType.isActive(((StakedBlockHeader)header).getSealType())) {
             addError(
                     "Invalid header sealType, found sealType "
-                            + header.getSealType()
+                            + ((StakedBlockHeader)header).getSealType()
                             + " expected one of "
                             + BlockHeaderSealType.activeTypes(),
                     errors);

@@ -3,6 +3,7 @@ package org.aion.zero.impl.blockchain;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import org.aion.mcf.valid.BlockHeaderValidatorNew;
 import org.aion.types.AionAddress;
 import org.aion.equihash.OptimizedEquiValidator;
 import org.aion.mcf.blockchain.IBlockConstants;
@@ -21,6 +22,10 @@ import org.aion.zero.impl.core.DiffCalc;
 import org.aion.zero.impl.core.RewardsCalculator;
 import org.aion.zero.impl.valid.AionDifficultyRule;
 import org.aion.zero.impl.valid.AionExtraDataRule;
+import org.aion.zero.impl.valid.AionExtraDataRuleNew;
+import org.aion.zero.impl.valid.AionHeaderVersionRule;
+import org.aion.zero.impl.valid.AionPOSRule;
+import org.aion.zero.impl.valid.EnergyConsumedRuleNew;
 import org.aion.zero.impl.valid.HeaderSealTypeRule;
 import org.aion.zero.impl.valid.AionPOWRule;
 import org.aion.zero.impl.valid.EnergyConsumedRule;
@@ -116,7 +121,7 @@ public class ChainConfiguration implements IChainCfg<AionTransaction> {
                         new EnergyConsumedRule(),
                         new AionPOWRule(),
                         new EquihashSolutionRule(this.getEquihashValidator()),
-                        new HeaderSealTypeRule()));
+                        new AionHeaderVersionRule()));
     }
 
     @Override
@@ -140,11 +145,12 @@ public class ChainConfiguration implements IChainCfg<AionTransaction> {
             Collections.singletonList(new PoSDifficultyRule(this)));
     }
 
-    public BlockHeaderValidator<StakedBlockHeader> createPosBlockHeaderValidator() {
-        return new BlockHeaderValidator<>(
+    public BlockHeaderValidatorNew createBlockHeaderValidatorNew() {
+        return new BlockHeaderValidatorNew(
             Arrays.asList(
-                new AionExtraDataRule(this.getConstants().getMaximumExtraDataSize()),
-                new EnergyConsumedRule<StakedBlockHeader>(),
+                new AionExtraDataRuleNew(this.getConstants().getMaximumExtraDataSize()),
+                new AionPOSRule(),
+                new EnergyConsumedRuleNew(),
                 new HeaderSealTypeRule()));
     }
 

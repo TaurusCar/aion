@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.aion.mcf.types.exceptions.HeaderStructureException;
+import org.aion.mcf.valid.BlockHeaderValidatorNew;
 import org.aion.types.AionAddress;
 import org.aion.crypto.ECKey;
 import org.aion.crypto.ECKeyFac;
@@ -39,9 +40,9 @@ import org.aion.zero.impl.db.ContractDetailsAion;
 import org.aion.zero.impl.sync.DatabaseType;
 import org.aion.zero.impl.types.AionBlockSummary;
 import org.aion.zero.impl.types.AionPoSBlock;
-import org.aion.zero.impl.valid.AionExtraDataRule;
+import org.aion.zero.impl.valid.AionExtraDataRuleNew;
+import org.aion.zero.impl.valid.EnergyConsumedRuleNew;
 import org.aion.zero.impl.valid.HeaderSealTypeRule;
-import org.aion.zero.impl.valid.EnergyConsumedRule;
 import org.aion.zero.impl.valid.TXValidator;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.StakedBlockHeader;
@@ -330,14 +331,14 @@ public class StandaloneBlockchain extends AionBlockchainImpl {
                                  * generated are valid.
                                  */
                                 @Override
-                                public BlockHeaderValidator<StakedBlockHeader>
-                                        createPosBlockHeaderValidator() {
-                                    return new BlockHeaderValidator<>(
+                                public BlockHeaderValidatorNew
+                                        createBlockHeaderValidatorNew() {
+                                    return new BlockHeaderValidatorNew(
                                             Arrays.asList(
-                                                    new AionExtraDataRule(
+                                                    new AionExtraDataRuleNew(
                                                             this.constants
                                                                     .getMaximumExtraDataSize()),
-                                                    new EnergyConsumedRule(),
+                                                    new EnergyConsumedRuleNew(),
                                                     new HeaderSealTypeRule()));
                                 }
                             };

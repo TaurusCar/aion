@@ -191,7 +191,7 @@ public class AionHub {
                         this.blockchain,
                         syncMgr.getSyncStats(),
                         p2pMgr,
-                        chainConfig.createPosBlockHeaderValidator(),
+                        chainConfig.createBlockHeaderValidatorNew(),
                         cfg.getNet().getP2p().inSyncOnlyMode(),
                         apiVersion,
                         mempool);

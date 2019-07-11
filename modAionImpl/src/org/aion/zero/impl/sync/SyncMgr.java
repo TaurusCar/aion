@@ -26,7 +26,7 @@ import org.aion.interfaces.block.BlockHeader;
 import org.aion.log.AionLoggerFactory;
 import org.aion.log.LogEnum;
 import org.aion.mcf.config.StatsType;
-import org.aion.mcf.valid.BlockHeaderValidator;
+import org.aion.mcf.valid.BlockHeaderValidatorNew;
 import org.aion.p2p.IP2pMgr;
 import org.aion.vm.api.types.ByteArrayWrapper;
 import org.aion.util.bytes.ByteUtil;
@@ -82,7 +82,7 @@ public final class SyncMgr {
     private Thread syncGs = null;
     private Thread syncSs = null;
 
-    private BlockHeaderValidator<StakedBlockHeader> blockHeaderValidator;
+    private BlockHeaderValidatorNew blockHeaderValidator;
     private volatile long timeUpdated = 0;
     private AtomicBoolean queueFull = new AtomicBoolean(false);
 
@@ -178,7 +178,7 @@ public final class SyncMgr {
 
         blocksQueueMax = _blocksQueueMax;
 
-        blockHeaderValidator = new ChainConfiguration().createPosBlockHeaderValidator();
+        blockHeaderValidator = new ChainConfiguration().createBlockHeaderValidatorNew();
 
         long selfBest = chain.getBestBlock().getNumber();
         stats = new SyncStats(selfBest, _showStatus, showStatistics, maxActivePeers);

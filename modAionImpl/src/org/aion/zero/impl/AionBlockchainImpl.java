@@ -48,6 +48,7 @@ import org.aion.mcf.types.AbstractBlockSummary;
 import org.aion.mcf.types.BlockIdentifierImpl;
 import org.aion.mcf.types.exceptions.HeaderStructureException;
 import org.aion.mcf.valid.BlockHeaderValidator;
+import org.aion.mcf.valid.BlockHeaderValidatorNew;
 import org.aion.mcf.valid.GrandParentBlockHeaderValidator;
 import org.aion.mcf.valid.ParentBlockHeaderValidator;
 import org.aion.mcf.valid.TransactionTypeRule;
@@ -121,7 +122,7 @@ public class AionBlockchainImpl implements IAionBlockchain {
     private final GrandParentBlockHeaderValidator<StakedBlockHeader>
             grandParentStakedBlockHeaderValidator;
     private final ParentBlockHeaderValidator<StakedBlockHeader> stakedParentHeaderValidator;
-    private final BlockHeaderValidator<StakedBlockHeader> stakedBlockHeaderValidator;
+    private final BlockHeaderValidatorNew stakedBlockHeaderValidator;
 
     /**
      * Chain configuration class, because chain configuration may change dependant on the block
@@ -185,7 +186,9 @@ public class AionBlockchainImpl implements IAionBlockchain {
         grandParentStakedBlockHeaderValidator =
                 chainConfiguration.createPosGrandParentHeaderValidator();
         stakedParentHeaderValidator = chainConfiguration.createPosParentHeaderValidator();
-        stakedBlockHeaderValidator = chainConfiguration.createPosBlockHeaderValidator();
+
+
+        stakedBlockHeaderValidator = chainConfiguration.createBlockHeaderValidatorNew();
 
         this.transactionStore = this.repository.getTransactionStore();
 
@@ -1218,6 +1221,15 @@ public class AionBlockchainImpl implements IAionBlockchain {
         //        if (!this.blockHeaderValidator.validate(header, LOG)) {
         //            return false;
         //        }
+
+
+        // TODO: [unity] hardCode stake number.
+        BigInteger stake = new BigInteger("1000000000000000000000000");
+
+        if (!stakedBlockHeaderValidator.validate(header, LOG, getParent(header).getTimestamp(), stake)) {
+            return false;
+        }
+
 
         PoSBlockInterface parent = this.getParent(header);
 
