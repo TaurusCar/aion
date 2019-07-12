@@ -15,22 +15,31 @@ public class AionPOSRule implements BlockHeaderRuleInterface {
     @Override
     public boolean validate(BlockHeader header, List<RuleError> errors, Object... extraArgs) {
 
-        if (extraArgs == null || extraArgs.length != 2) {
+        if (extraArgs == null || extraArgs.length < 3) {
             return false;
         }
 
-        long parentTimeStamp = (long) extraArgs[0];
-        BigInteger stake = (BigInteger) extraArgs[1];
+        BlockHeader parentHeader = (BlockHeader) extraArgs[0];
+        if (parentHeader == null) {
+            throw new IllegalStateException("Invalid parent header input");
+        }
+
+        long parentTimeStamp = parentHeader.getTimestamp();
+
+        BigInteger stake = (BigInteger) extraArgs[2];
+        if (stake == null) {
+            throw new IllegalStateException("Invalid stake input");
+        }
 
         long timeStamp = header.getTimestamp();
         BigInteger blockDifficulty = header.getDifficultyBI();
 
-        BigInteger divide =
+        BigInteger dividend =
                 new BigInteger(1, HashUtil.h256(((StakedBlockHeader) header).getSeed()));
 
         double delta =
                 blockDifficulty.doubleValue()
-                        * Math.log(boundry.divide(divide).doubleValue())
+                        * Math.log(boundry.divide(dividend).doubleValue())
                         / stake.doubleValue();
 
         if (timeStamp < (parentTimeStamp + delta)) {
@@ -41,11 +50,6 @@ public class AionPOSRule implements BlockHeaderRuleInterface {
         return true;
     }
 
-    @Override
-    public boolean validate(BlockHeader header, List<RuleError> errors) {
-        throw new IllegalStateException("Un-expect method call!");
-    }
-
     private static String formatError(long timeStamp, long parantTimeStamp, double delta) {
         return "block timestamp output ("
                 + timeStamp
@@ -54,10 +58,5 @@ public class AionPOSRule implements BlockHeaderRuleInterface {
                 + " delta:"
                 + delta
                 + ")";
-    }
-
-    @Override
-    public boolean extraValidateArg() {
-        return true;
     }
 }

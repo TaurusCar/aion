@@ -4,6 +4,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import org.aion.mcf.valid.BlockHeaderValidatorNew;
+import org.aion.mcf.valid.BlockNumberRuleNew;
+import org.aion.mcf.valid.TimeStampRuleNew;
 import org.aion.types.AionAddress;
 import org.aion.equihash.OptimizedEquiValidator;
 import org.aion.mcf.blockchain.IBlockConstants;
@@ -26,12 +28,15 @@ import org.aion.zero.impl.valid.AionExtraDataRuleNew;
 import org.aion.zero.impl.valid.AionHeaderVersionRule;
 import org.aion.zero.impl.valid.AionPOSRule;
 import org.aion.zero.impl.valid.EnergyConsumedRuleNew;
+import org.aion.zero.impl.valid.EnergyLimitRuleNew;
 import org.aion.zero.impl.valid.HeaderSealTypeRule;
 import org.aion.zero.impl.valid.AionPOWRule;
 import org.aion.zero.impl.valid.EnergyConsumedRule;
 import org.aion.zero.impl.valid.EnergyLimitRule;
 import org.aion.zero.impl.valid.EquihashSolutionRule;
+import org.aion.zero.impl.valid.NewSeedRule;
 import org.aion.zero.impl.valid.PoSDifficultyRule;
+import org.aion.zero.impl.valid.SignatureRule;
 import org.aion.zero.types.A0BlockHeader;
 import org.aion.zero.types.AionTransaction;
 import org.aion.zero.types.StakedBlockHeader;
@@ -61,12 +66,13 @@ public class ChainConfiguration implements IChainCfg<AionTransaction> {
         this(new BlockConstants(), null, BigInteger.ZERO);
     }
 
-    public ChainConfiguration(BlockConstants constants, Long monetaryUpdateBlkNum, BigInteger initialSupply) {
+    public ChainConfiguration(
+            BlockConstants constants, Long monetaryUpdateBlkNum, BigInteger initialSupply) {
         this.constants = constants;
         DiffCalc diffCalcInternal = new DiffCalc(constants);
 
-
-        RewardsCalculator rewardsCalcInternal = new RewardsCalculator(constants, monetaryUpdateBlkNum, initialSupply);
+        RewardsCalculator rewardsCalcInternal =
+                new RewardsCalculator(constants, monetaryUpdateBlkNum, initialSupply);
 
         this.difficultyCalculatorAdapter =
                 (parent, grandParent) -> {
@@ -137,30 +143,26 @@ public class ChainConfiguration implements IChainCfg<AionTransaction> {
 
     public GrandParentBlockHeaderValidator<A0BlockHeader> createGrandParentHeaderValidator() {
         return new GrandParentBlockHeaderValidator<>(
-            Collections.singletonList(new AionDifficultyRule(this)));
-    }
-
-    public GrandParentBlockHeaderValidator<StakedBlockHeader> createPosGrandParentHeaderValidator() {
-        return new GrandParentBlockHeaderValidator<>(
-            Collections.singletonList(new PoSDifficultyRule(this)));
+                Collections.singletonList(new AionDifficultyRule(this)));
     }
 
     public BlockHeaderValidatorNew createBlockHeaderValidatorNew() {
         return new BlockHeaderValidatorNew(
-            Arrays.asList(
-                new AionExtraDataRuleNew(this.getConstants().getMaximumExtraDataSize()),
-                new AionPOSRule(),
-                new EnergyConsumedRuleNew(),
-                new HeaderSealTypeRule()));
-    }
-
-    public ParentBlockHeaderValidator<StakedBlockHeader> createPosParentHeaderValidator() {
-        return new ParentBlockHeaderValidator<>(
-            Arrays.asList(
-                new BlockNumberRule<>(),
-                new TimeStampRule<>(),
-                new EnergyLimitRule(
-                    this.getConstants().getEnergyDivisorLimitLong(),
-                    this.getConstants().getEnergyLowerBoundLong())));
+                Arrays.asList(
+                        // Only need new header
+                        new HeaderSealTypeRule(),
+                        new SignatureRule(),
+                        new EnergyConsumedRuleNew(),
+                        new AionExtraDataRuleNew(getConstants().getMaximumExtraDataSize()),
+                        // Need new header & parent header
+                        new BlockNumberRuleNew(),
+                        new TimeStampRuleNew(),
+                        new NewSeedRule(),
+                        new AionPOSRule(),
+                        new EnergyLimitRuleNew(
+                                getConstants().getEnergyDivisorLimitLong(),
+                                getConstants().getEnergyLowerBoundLong()),
+                        // Need new header, parent header & grantParent Header
+                        new PoSDifficultyRule(this)));
     }
 }

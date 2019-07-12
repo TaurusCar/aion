@@ -9,11 +9,11 @@ import org.aion.zero.types.StakedBlockHeader;
 public class HeaderSealTypeRule implements BlockHeaderRuleInterface {
 
     @Override
-    public boolean validate(BlockHeader header, List<RuleError> errors) {
-        if (!BlockHeaderSealType.isActive(((StakedBlockHeader)header).getSealType())) {
+    public boolean validate(BlockHeader header, List<RuleError> errors, Object... extraArgs) {
+        if (!BlockHeaderSealType.isActive(((StakedBlockHeader) header).getSealType())) {
             addError(
                     "Invalid header sealType, found sealType "
-                            + ((StakedBlockHeader)header).getSealType()
+                            + ((StakedBlockHeader) header).getSealType()
                             + " expected one of "
                             + BlockHeaderSealType.activeTypes(),
                     errors);

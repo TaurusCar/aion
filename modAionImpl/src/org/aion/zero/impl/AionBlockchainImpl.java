@@ -119,9 +119,6 @@ public class AionBlockchainImpl implements IAionBlockchain {
     private final ParentBlockHeaderValidator<A0BlockHeader> parentHeaderValidator;
     private final BlockHeaderValidator<A0BlockHeader> blockHeaderValidator;
 
-    private final GrandParentBlockHeaderValidator<StakedBlockHeader>
-            grandParentStakedBlockHeaderValidator;
-    private final ParentBlockHeaderValidator<StakedBlockHeader> stakedParentHeaderValidator;
     private final BlockHeaderValidatorNew stakedBlockHeaderValidator;
 
     /**
@@ -182,11 +179,6 @@ public class AionBlockchainImpl implements IAionBlockchain {
                 this.chainConfiguration.createGrandParentHeaderValidator();
         this.parentHeaderValidator = this.chainConfiguration.createParentHeaderValidator();
         this.blockHeaderValidator = this.chainConfiguration.createBlockHeaderValidator();
-
-        grandParentStakedBlockHeaderValidator =
-                chainConfiguration.createPosGrandParentHeaderValidator();
-        stakedParentHeaderValidator = chainConfiguration.createPosParentHeaderValidator();
-
 
         stakedBlockHeaderValidator = chainConfiguration.createBlockHeaderValidatorNew();
 
@@ -940,8 +932,8 @@ public class AionBlockchainImpl implements IAionBlockchain {
     public AionPoSBlock createNewBlock(
             AionPoSBlock parent, List<AionTransaction> txs, byte[] seed) {
         return createNewBlockInternal(
-            parent, txs, seed, true, System.currentTimeMillis() / THOUSAND_MS)
-            .block;
+                        parent, txs, seed, true, System.currentTimeMillis() / THOUSAND_MS)
+                .block;
     }
 
     /**
@@ -1218,32 +1210,19 @@ public class AionBlockchainImpl implements IAionBlockchain {
          * 1. Block came in from network; validated by P2P before processing further
          * 2. Block was submitted locally - adding invalid data to your own chain
          */
-        //        if (!this.blockHeaderValidator.validate(header, LOG)) {
-        //            return false;
-        //        }
-
 
         // TODO: [unity] hardCode stake number.
         BigInteger stake = new BigInteger("1000000000000000000000000");
 
-        if (!stakedBlockHeaderValidator.validate(header, LOG, getParent(header).getTimestamp(), stake)) {
-            return false;
+        StakedBlockHeader parentHeader = getParent(header).getHeader();
+
+        StakedBlockHeader grantParentHeader = null;
+        if (getParent(parentHeader) != null) {
+            grantParentHeader = getParent(parentHeader).getHeader();
         }
 
-
-        PoSBlockInterface parent = this.getParent(header);
-
-        if (!stakedParentHeaderValidator.validate(header, parent.getHeader(), LOG)) {
-            return false;
-        }
-
-        PoSBlockInterface grandParent = this.getParent(parent.getHeader());
-
-        return grandParentStakedBlockHeaderValidator.validate(
-                grandParent == null ? null : grandParent.getHeader(),
-                parent.getHeader(),
-                header,
-                LOG);
+        return stakedBlockHeaderValidator.validate(
+                header, LOG, parentHeader, grantParentHeader, stake);
     }
 
     /**

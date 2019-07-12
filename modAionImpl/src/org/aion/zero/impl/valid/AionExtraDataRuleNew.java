@@ -8,21 +8,20 @@ public class AionExtraDataRuleNew implements BlockHeaderRuleInterface {
 
     private final int maximumExtraDataSize;
 
-    public AionExtraDataRuleNew(int maximumExtraDataSize) {
-        if (maximumExtraDataSize < 0)
+    public AionExtraDataRuleNew(int _maximumExtraDataSize) {
+        if (_maximumExtraDataSize < 0)
             throw new IllegalArgumentException("extra data size must be >= 0");
 
-        this.maximumExtraDataSize = maximumExtraDataSize;
+        maximumExtraDataSize = _maximumExtraDataSize;
     }
 
     @Override
-    public boolean validate(BlockHeader header, List<RuleError> errors) {
-        if (header.getExtraData() != null
-                && header.getExtraData().length > this.maximumExtraDataSize) {
+    public boolean validate(BlockHeader header, List<RuleError> errors, Object... extraArgs) {
+        if (header.getExtraData() != null && header.getExtraData().length > maximumExtraDataSize) {
             addError(
                     String.format(
                             "extraData (%d) > MAXIMUM_EXTRA_DATA_SIZE (%d)",
-                            header.getExtraData().length, this.maximumExtraDataSize),
+                            header.getExtraData().length, maximumExtraDataSize),
                     errors);
             return false;
         }

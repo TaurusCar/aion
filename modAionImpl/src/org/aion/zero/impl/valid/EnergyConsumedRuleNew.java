@@ -10,18 +10,16 @@ import org.aion.mcf.blockchain.valid.BlockHeaderRuleInterface;
  */
 public class EnergyConsumedRuleNew implements BlockHeaderRuleInterface {
 
+    private static String formatError(long energyConsumed, long energyLimit) {
+        return "energyConsumed (" + energyConsumed + ") > energyLimit(" + energyLimit + ")";
+    }
+
     @Override
-    public boolean validate(BlockHeader blockHeader, List<RuleError> error) {
-        if (blockHeader.getEnergyConsumed() > blockHeader.getEnergyLimit()) {
-            addError(
-                    formatError(blockHeader.getEnergyConsumed(), blockHeader.getEnergyLimit()),
-                    error);
+    public boolean validate(BlockHeader header, List<RuleError> errors, Object... extraArgs) {
+        if (header.getEnergyConsumed() > header.getEnergyLimit()) {
+            addError(formatError(header.getEnergyConsumed(), header.getEnergyLimit()), errors);
             return false;
         }
         return true;
-    }
-
-    private static String formatError(long energyConsumed, long energyLimit) {
-        return "energyConsumed (" + energyConsumed + ") > energyLimit(" + energyLimit + ")";
     }
 }

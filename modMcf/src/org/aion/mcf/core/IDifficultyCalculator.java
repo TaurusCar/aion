@@ -1,7 +1,7 @@
 package org.aion.mcf.core;
 
 import java.math.BigInteger;
-import org.aion.mcf.types.AbstractBlockHeader;
+import org.aion.interfaces.block.BlockHeader;
 
 /**
  * Interface for retrieving difficulty calculations for a particular chain configuration, note that
@@ -12,5 +12,5 @@ import org.aion.mcf.types.AbstractBlockHeader;
  */
 @FunctionalInterface
 public interface IDifficultyCalculator {
-    BigInteger calculateDifficulty(AbstractBlockHeader current, AbstractBlockHeader dependency);
+    BigInteger calculateDifficulty(BlockHeader current, BlockHeader dependency);
 }

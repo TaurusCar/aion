@@ -32,17 +32,9 @@ public class BlockHeaderValidatorNew {
     public boolean validate(BlockHeader header, Logger logger, Object... extraValidationArg) {
         List<RuleError> errors = new LinkedList<>();
         for (BlockHeaderRuleInterface rule : rules) {
-            if (rule.extraValidateArg()) {
-                if (!rule.validate(header, errors, extraValidationArg)) {
-                    if (logger != null) logErrors(logger, errors);
-                    return false;
-                }
-
-            } else {
-                if (!rule.validate(header, errors)) {
-                    if (logger != null) logErrors(logger, errors);
-                    return false;
-                }
+            if (!rule.validate(header, errors, extraValidationArg)) {
+                if (logger != null) logErrors(logger, errors);
+                return false;
             }
         }
         return true;
