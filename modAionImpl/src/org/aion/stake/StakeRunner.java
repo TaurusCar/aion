@@ -157,6 +157,7 @@ public class StakeRunner extends AbstractStakeRunner<AionPoSBlock> {
                 byte[] sig = key.sign(block.getHeader().getMineHash()).getSignature();
 
                 block.getHeader().setSignature(sig);
+                block.getHeader().setPubKey(key.getPubKey());
 
                 IEvent ev = new EventConsensus(CALLBACK.ON_STAKE_SIG);
                 ev.setFuncArgs(Collections.singletonList(block));

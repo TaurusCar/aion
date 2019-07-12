@@ -19,12 +19,14 @@ import static org.aion.util.bytes.ByteUtil.*;
 public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeader {
 
     // 0 ~ 12 has been defined in the AbstractClass
-    private static final int RLP_BH_SIGNATURE = 13, RLP_BH_SEED = 14;
+    private static final int RLP_BH_SEED = 13, RLP_BH_SIGNATURE = 14, RLP_BH_PUBKEY = 15;
 
     /*
      * The seed of this block. It should be a verifiable signature of the seed of the previous PoS block.
      */
     private byte[] seed;
+
+    private byte[] pubkey;
 
     /*
      * A verifiable signature of the encoding of this block (without this field).
@@ -42,6 +44,7 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
 
         signature = rlpHeader.get(RLP_BH_SIGNATURE).getRLPData();
         seed = rlpHeader.get(RLP_BH_SEED).getRLPData();
+        pubkey = rlpHeader.get(RLP_BH_PUBKEY).getRLPData();
     }
 
     /**
@@ -58,6 +61,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
 
         seed = new byte[toCopy.getSeed().length];
         System.arraycopy(toCopy.getSeed(), 0, seed, 0, seed.length);
+
+        pubkey = new byte[toCopy.getPubKey().length];
+        System.arraycopy(toCopy.getSeed(), 0, pubkey, 0, pubkey.length);
     }
 
     public StakedBlockHeader(
@@ -71,8 +77,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
             long _energyConsumed,
             long _energyLimit,
             long _timestamp,
+            byte[] _seed,
             byte[] _signature,
-            byte[] _seed) {
+            byte[] _pubkey) {
         super(
                 _sealType,
                 _number,
@@ -88,8 +95,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
                 _energyLimit,
                 _timestamp);
 
-        signature = _signature;
         seed = _seed;
+        signature = _signature;
+        pubkey = _pubkey;
     }
 
     public StakedBlockHeader(
@@ -106,8 +114,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
             long _energyConsumed,
             long _energyLimit,
             long _timestamp,
+            byte[] _seed,
             byte[] _signature,
-            byte[] _seed) {
+            byte[] _pubkey) {
 
         super(
                 _sealType,
@@ -124,8 +133,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
                 _energyLimit,
                 _timestamp);
 
-        signature = _signature;
         seed = _seed;
+        signature = _signature;
+        pubkey = _pubkey;
     }
 
     public byte[] getEncodedWithoutSignature() {
@@ -162,6 +172,7 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
 
         if (withSignature) {
             byte[] rlpSignature = RLP.encodeElement(signature);
+            byte[] rlpPubkey = RLP.encodeElement(pubkey);
             return RLP.encodeList(
                     rlpVersion,
                     rlpNumber,
@@ -176,8 +187,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
                     rlpEnergyConsumed,
                     rlpEnergyLimit,
                     rlpTimestamp,
+                    rlpSeed,
                     rlpSignature,
-                    rlpSeed);
+                    rlpPubkey);
         } else {
             return RLP.encodeList(
                     rlpVersion,
@@ -200,11 +212,14 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
     public String toStringWithSuffix(final String suffix) {
 
         return commonDataToStringWithSuffix(suffix)
+                + "  seed="
+                + toHexString(seed)
+                + suffix
                 + "  signature="
                 + toHexString(signature)
                 + suffix
-                + "  seed="
-                + toHexString(seed)
+                + "  publicKey="
+                + toHexString(pubkey)
                 + suffix;
     }
 
@@ -222,6 +237,14 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
 
     public void setSignature(byte[] _signature) {
         signature = _signature;
+    }
+
+    public byte[] getPubKey() {
+        return pubkey;
+    }
+
+    public void setPubKey(byte[] _pubkey) {
+        pubkey = _pubkey;
     }
 
     /**
@@ -254,8 +277,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
         }
 
         return builder.withRlpCommonHeader(rlpHeader)
-                .withSignature(rlpHeader.get(RLP_BH_SIGNATURE).getRLPData())
                 .withSeed(rlpHeader.get(RLP_BH_SEED).getRLPData())
+                .withSignature(rlpHeader.get(RLP_BH_SIGNATURE).getRLPData())
+                .withPubKey(rlpHeader.get(RLP_BH_PUBKEY).getRLPData())
                 .build();
     }
 
@@ -263,13 +287,14 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
     public static class Builder extends AbstractBuilder {
         protected byte[] seed;
         protected byte[] signature;
+        protected byte[] pubkey;
 
         /*
          * Builder parameters, not related to header data structure
          */
         private static int SIG_LENGTH = 64;
-        private static int SEED_LENGTH = 96;
-        private static byte[] EMPTY_SIGNATURE = new byte[64];
+        private static int SEED_LENGTH = 64;
+        private static int PUBKEY_LENGTH = 32;
 
         public Builder fromUnsafeSource() {
             return (Builder) super.fromUnsafeSource();
@@ -379,6 +404,20 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
             return this;
         }
 
+        public Builder withPubKey(byte[] _pubkey) throws HeaderStructureException {
+            if (isFromUnsafeSource) {
+                if (_pubkey == null)
+                    throw new HeaderStructureException("pubkey", RLP_BH_PUBKEY, "cannot be null");
+
+                if (_pubkey.length != PUBKEY_LENGTH) {
+                    throw new HeaderStructureException(
+                            "pubkey", RLP_BH_PUBKEY, "invalid seed length");
+                }
+            }
+            pubkey = _pubkey;
+            return this;
+        }
+
         public StakedBlockHeader build() {
 
             // Formalize the data
@@ -391,8 +430,9 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
             logsBloom = logsBloom == null ? EMPTY_BLOOM : logsBloom;
             difficulty = difficulty == null ? ByteUtil.EMPTY_HALFWORD : difficulty;
             extraData = extraData == null ? ByteUtil.EMPTY_WORD : extraData;
-            signature = signature == null ? EMPTY_SIGNATURE : signature;
-            seed = seed == null ? EMPTY_SIGNATURE : seed;
+            signature = signature == null ? new byte[SIG_LENGTH] : signature;
+            seed = seed == null ? new byte[SEED_LENGTH] : seed;
+            pubkey = pubkey == null ? new byte[PUBKEY_LENGTH] : pubkey;
 
             return new StakedBlockHeader(
                     sealType,
@@ -409,7 +449,8 @@ public class StakedBlockHeader extends AbstractBlockHeader implements BlockHeade
                     energyLimit,
                     timestamp,
                     signature,
-                    seed);
+                    seed,
+                    pubkey);
         }
     }
 }

@@ -55,7 +55,7 @@ public class AionPoS {
 
     private EventExecuteService ees;
 
-    private byte[] seed = new byte[96];
+    private byte[] seed = new byte[64];
     private byte[] privateKey =
             ByteUtil.hexStringToBytes(
                     "0xcc76648ce8798bc18130bc9d637995e5c42a922ebeab78795fac58081b9cf9d4069346ca77152d3e42b1630826feef365683038c3b00ff20b0ea42d7c121fa9f");
@@ -133,13 +133,9 @@ public class AionPoS {
                                                                 true, false)
                                                 || now - lastUpdate.get()
                                                         > 19999) { // fallback, when
-                                            // we never
-                                            // received any
-                                            // events
-
                                             seed =
                                                     key.sign(blockchain.getBestBlock().getSeed())
-                                                            .toBytes();
+                                                            .getSignature();
 
                                             createNewBlockTemplate(seed);
                                         }
@@ -175,8 +171,8 @@ public class AionPoS {
         sn = IHandler.TYPE.CONSENSUS.getValue() << 8;
         eventSN.add(sn + EventConsensus.CALLBACK.ON_STAKE_SIG.getValue());
 
-//        sn = IHandler.TYPE.BLOCK0.getValue() << 8;
-//        eventSN.add(sn + EventBlock.CALLBACK.ONBEST0.getValue());
+        //        sn = IHandler.TYPE.BLOCK0.getValue() << 8;
+        //        eventSN.add(sn + EventBlock.CALLBACK.ONBEST0.getValue());
 
         return eventSN;
     }
@@ -261,7 +257,7 @@ public class AionPoS {
                 return;
             }
 
-            if (seed == null || seed.length != 96) {
+            if (seed == null || seed.length != 64) {
                 LOG.error("Invalid seed info.");
                 return;
             }

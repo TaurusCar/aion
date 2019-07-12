@@ -70,7 +70,8 @@ public class AionPoSBlock extends AbstractBlock<StakedBlockHeader, AionTransacti
                 header.getEnergyConsumed(),
                 header.getEnergyLimit(),
                 header.getSignature(),
-                header.getSeed());
+                header.getSeed(),
+                header.getPubKey());
     }
 
     public AionPoSBlock(
@@ -88,7 +89,8 @@ public class AionPoSBlock extends AbstractBlock<StakedBlockHeader, AionTransacti
             long energyConsumed,
             long energyLimit,
             byte[] signature,
-            byte[] seed) {
+            byte[] seed,
+            byte[] pubkey) {
 
         StakedBlockHeader.Builder builder = new StakedBlockHeader.Builder();
 
@@ -106,7 +108,8 @@ public class AionPoSBlock extends AbstractBlock<StakedBlockHeader, AionTransacti
                     .withEnergyConsumed(energyConsumed)
                     .withEnergyLimit(energyLimit)
                     .withSignature(signature)
-                    .withSeed(seed);
+                    .withSeed(seed)
+                    .withPubKey(pubkey);
         } catch (HeaderStructureException e) {
             throw new RuntimeException(e);
         }

@@ -90,7 +90,7 @@ public class AionGenesisPoS extends AionPoSBlock {
      * Corresponds to {@link A0BlockHeader#getNonce()} nonce of the block, we arbitrarily set this
      * to 0 for now
      */
-    protected static final byte[] GENESIS_SEED = new byte[96];
+    protected static final byte[] GENESIS_SEED = new byte[64];
 
     /**
      * Corresponds to {@link A0BlockHeader#getEnergyLimit()} sets the initial energy limit. We will
