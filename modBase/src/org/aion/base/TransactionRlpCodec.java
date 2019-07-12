@@ -8,6 +8,7 @@ import org.aion.log.LogEnum;
 import org.aion.rlp.RLP;
 import org.aion.rlp.RLPList;
 import org.aion.types.AionAddress;
+import org.aion.util.bytes.ByteUtil;
 import org.slf4j.Logger;
 
 public class TransactionRlpCodec {
@@ -79,7 +80,7 @@ public class TransactionRlpCodec {
 
     private static byte[] getEncodingPrivate(AionTransaction tx, boolean withSignature) {
 
-        byte[] nonce = RLP.encodeElement(tx.getNonceBI().toByteArray());
+        byte[] nonce = RLP.encodeElement(tx.getNonce());
 
         byte[] to;
         if (tx.getDestinationAddress() == null) {
@@ -88,7 +89,7 @@ public class TransactionRlpCodec {
             to = RLP.encodeElement(tx.getDestinationAddress().toByteArray());
         }
 
-        byte[] value = RLP.encodeElement(tx.getValue());
+        byte[] value = RLP.encodeElement(ByteUtil.bigIntegerToBytes(tx.getValueBI()));
         byte[] data = RLP.encodeElement(tx.getData());
         byte[] timeStamp = RLP.encodeElement(tx.getTimestamp());
         byte[] nrg = RLP.encodeLong(tx.getEnergyLimit());
