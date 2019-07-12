@@ -89,7 +89,8 @@ public class TransactionRlpCodec {
             to = RLP.encodeElement(tx.getDestinationAddress().toByteArray());
         }
 
-        byte[] value = RLP.encodeElement(ByteUtil.bigIntegerToBytes(tx.getValueBI()));
+        BigInteger val = tx.getValueBI();
+        byte[] value = RLP.encodeElement(val.equals(BigInteger.ZERO) ? val.toByteArray() : ByteUtil.bigIntegerToBytes(val));
         byte[] data = RLP.encodeElement(tx.getData());
         byte[] timeStamp = RLP.encodeElement(tx.getTimestamp());
         byte[] nrg = RLP.encodeLong(tx.getEnergyLimit());
