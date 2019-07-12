@@ -79,7 +79,7 @@ public class TransactionRlpCodec {
 
     private static byte[] getEncodingPrivate(AionTransaction tx, boolean withSignature) {
 
-        byte[] nonce = RLP.encodeElement(tx.getNonce());
+        byte[] nonce = RLP.encodeElement(tx.getNonceBI().toByteArray());
 
         byte[] to;
         if (tx.getDestinationAddress() == null) {
